@@ -4,15 +4,14 @@
 import HelloWorld from './components/HelloWorld.vue'
 import DailyViews from './components/DailyViews.vue'
 import { NConfigProvider, darkTheme, lightTheme } from 'naive-ui';
+
 </script>
 
 <template>
   <n-config-provider :theme="lightTheme">
-  <!-- <img alt="Vue logo" src="./assets/logo.png" /> -->
   <n-message-provider >
-    <DailyViews />
+    <daily-views />
   </n-message-provider>
-
   </n-config-provider>
 </template>
 
@@ -23,6 +22,6 @@ import { NConfigProvider, darkTheme, lightTheme } from 'naive-ui';
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-  margin-top: 60px;
+  margin-top: 30px;
 }
 </style>

@@ -2,14 +2,14 @@
 import { useMessage } from 'naive-ui'
 import { defineComponent, h, ref } from 'vue'
 import { isYesterday, addDays, isTomorrow } from 'date-fns'
-import DailyData from './DailyData.vue'
+import ShowDaily from './ShowDaily.vue'
 const message = useMessage();
+
+
 const _date = new Date();
-let value = ref(addDays(Date.now(), 0).valueOf());
+const default_select = ref(addDays(_date.getTime(), 0).valueOf());
 // bugs? value was default selected
 // :default-value="now_unix_day" was not working
-
-console.log(value.value);
 
 // got all day then times one day seconds got UTC time
 // now UTC+0 need -8 hours for chinese
@@ -19,7 +19,6 @@ console.log(value.value);
 // console.log("got:"+now_unix_day.value);
 
 
-const test_old_data = {'2022-5-12':'11', '2022-5-13':'22','2022-5-14':'33'}
 
 const isDateDisabled=(timestamp)=> {
     if (timestamp > Date.now()) {
@@ -32,21 +31,10 @@ const handleUpdateValue=(_, { year, month, date })=> {
     message.success(`${year}-${month}-${date}`);
 }
 
-const showOldDaily=(show_date)=>{
-    if(show_date in test_old_data){
-        console.log(test_old_data[show_date]);
-        h(
-            'div',
-            {
-                style: {}
-            },
-            {default:()=>"null"}
-        )
-        return renderData('123');
-    }
+
+function showDate(year, month, day){
+    return {'year':year,'month':month,'day':day};
 }
-
-
 
 
 </script>
@@ -54,13 +42,12 @@ const showOldDaily=(show_date)=>{
 <template>
     <n-space class="calender-layout" vertical justify="center">
         <n-calendar
-            :value="value"
+            :value="default_select"
             #="{ year, month, date }"
-            :is-date-disabled="isDateDisabled"
-            @update:value="handleUpdateValue"
-        >
-
-        <DailyData :show_date="year+'-'+month+'-'+date" />
+            :is-date-disabled="isDateDisabled">
+            <!-- @update:value="handleUpdateValue"
+        > TODO: fixed click calendar events. -->
+        <show-daily :show_date="showDate(year, month, date)" />
 
         </n-calendar>
     </n-space>
