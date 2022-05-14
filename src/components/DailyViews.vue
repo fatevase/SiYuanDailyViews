@@ -4,8 +4,20 @@ import { defineComponent, h, ref } from 'vue'
 import { isYesterday, addDays, isTomorrow } from 'date-fns'
 import DailyData from './DailyData.vue'
 const message = useMessage();
+const _date = new Date();
+let value = ref(addDays(Date.now(), 0).valueOf());
+// bugs? value was default selected
+// :default-value="now_unix_day" was not working
 
-let value = ref(addDays(Date.now(), 1).valueOf());
+console.log(value.value);
+
+// got all day then times one day seconds got UTC time
+// now UTC+0 need -8 hours for chinese
+// let time_offest = new Date().getTimezoneOffset()*60*1000;
+// let now_date_for_day = time_offest +(Math.floor(_date.getTime() / 86400000) * 86400000)
+// let now_unix_day = ref((now_date_for_day)/1000);
+// console.log("got:"+now_unix_day.value);
+
 
 const test_old_data = {'2022-5-12':'11', '2022-5-13':'22','2022-5-14':'33'}
 
@@ -42,16 +54,14 @@ const showOldDaily=(show_date)=>{
 <template>
     <n-space class="calender-layout" vertical justify="center">
         <n-calendar
-            v-model:value="value"
+            :value="value"
             #="{ year, month, date }"
             :is-date-disabled="isDateDisabled"
             @update:value="handleUpdateValue"
         >
-        <n-tag type="success" class="tag-full" size="large" v-if="true">
-            
-            {{showOldDaily()}}
-            <DailyData show_date="2022-5-22" />
-        </n-tag>
+
+        <DailyData :show_date="year+'-'+month+'-'+date" />
+
         </n-calendar>
     </n-space>
     <n-space></n-space>
@@ -64,7 +74,5 @@ a {
 .calender-layout {
     padding-bottom: 2em;
 }
-.tag-full{
-    width: 100%;
-}
+
 </style>
