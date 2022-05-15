@@ -1,12 +1,13 @@
 <script setup>
 import { useMessage } from 'naive-ui'
-import { defineComponent, h, ref } from 'vue'
+import { defineComponent, h, ref, computed } from 'vue'
 import { isYesterday, addDays, isTomorrow } from 'date-fns'
 import ShowDaily from './ShowDaily.vue'
 const message = useMessage();
 
 
 const _date = new Date();
+const now_month = ref(_date.getMonth() + 1);
 const default_select = ref(addDays(_date.getTime(), 0).valueOf());
 // bugs? value was default selected
 // :default-value="now_unix_day" was not working
@@ -28,27 +29,46 @@ return false;
 }
 
 const handleUpdateValue=(_, { year, month, date })=> {
-    message.success(`${year}-${month}-${date}`);
+    default_select.value = new Date(year+'-'+month+'-'+date);
+}
+
+const showDate = (date) => {
+    return {
+        'year': date[0],
+        'month': date[1],
+        'day': date[2]
+    }
 }
 
 
-function showDate(year, month, day){
-    return {'year':year,'month':month,'day':day};
+const freshCalendar=(info) => {
+    console.log("info:"+info);
+
 }
 
+const checkFresh=(month) =>{
+    console.log("month:"+month+" now_month:"+now_month.value);
+    if(month >= now_month.value){
+        return true;
+    }else{
+        return false;
+    }
+}
 
 </script>
 
 <template>
+
     <n-space class="calender-layout" vertical justify="center">
         <n-calendar
             :value="default_select"
             #="{ year, month, date }"
-            :is-date-disabled="isDateDisabled">
-            <!-- @update:value="handleUpdateValue"
-        > TODO: fixed click calendar events. -->
-        <show-daily :show_date="showDate(year, month, date)" />
-
+            :is-date-disabled="isDateDisabled"
+            :on-panel-change="freshCalendar"
+             @update:value="handleUpdateValue"
+        >
+            <!-- 这里要加不同的key 没明白为什么这么做props就可以正常获得值了 -->
+            <show-daily :note_date="showDate([year, month, date])" :key="year+'-'+month+'-'+date"></show-daily>
         </n-calendar>
     </n-space>
     <n-space></n-space>

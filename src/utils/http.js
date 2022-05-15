@@ -1,5 +1,6 @@
 import axios from 'axios'     //引入
 import {useMessage} from 'naive-ui'
+// import {inject} from 'vue'
 
 // TODO: 修改成检测目前环境
 let baseURL = ''
@@ -13,8 +14,18 @@ let baseURL = ''
  
 let config = {
   baseURL: baseURL,
-  timeout: 7000       //设置最大请求时间7s
+  timeout: 7000,       //设置最大请求时间7s
+  proxy: {
+    '/siyuan_sql': {
+        target: 'http://127.0.0.1:6806/api/query/sql',  //接口域名
+        changeOrigin: true,                             //是否跨域
+        ws: true,                                       //是否代理 websockets
+        secure: false,                                  //是否https接口
+      rewrite: (path) => path.replace(/^\/siyuan_sql/, '')
+    }
+  }
 }
+// const _axios = inject("axios");
 const _axios = axios.create(config)
 const message = useMessage()
  

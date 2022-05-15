@@ -7,9 +7,11 @@ import http from './http.js';
 	/* 获取笔记 */
 	/* /api/getlist是请求接口地址，有http.js里面的Ip加上，如：http:192.168.0.1:9090//api/getlist  */
 	ApiFunc.getNoteByTitle = (params) => {
-		return http.post('http://127.0.0.1:6806/api/query/sql', params)
+		return http.post('/api/query/sql', params)
 	}
-	
+	// ApiFunc.getNoteByTitle = (params) => {
+	// 	return http.post('/siyuan_sql', params)
+	// }
 	
 	//暴露出这个对象
 	export default ApiFunc;
