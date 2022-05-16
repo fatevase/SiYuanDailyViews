@@ -1,33 +1,23 @@
 import axios from 'axios'     //引入
-import {useMessage} from 'naive-ui'
 // import {inject} from 'vue'
 
 // TODO: 修改成检测目前环境
-let baseURL = ''
+let baseURL = '';
 
-//这一步的目的是判断出当前是开发环境还是生成环境，方法不止一种，达到目的就行
-// if(process.env.NODE_ENV=="development"){
-//   baseURL=''
-// }else{
-//   baseURL=''
-// }
+// 这一步的目的是判断出当前是开发环境还是生成环境
+if(process.env.NODE_ENV=="development"){
+  baseURL=import.meta.env.VITE_APP_APIBASE;
+}else{
+  baseURL=import.meta.env.VITE_APP_APIBASE;
+}
  
 let config = {
   baseURL: baseURL,
   timeout: 7000,       //设置最大请求时间7s
-  proxy: {
-    '/siyuan_sql': {
-        target: 'http://127.0.0.1:6806/api/query/sql',  //接口域名
-        changeOrigin: true,                             //是否跨域
-        ws: true,                                       //是否代理 websockets
-        secure: false,                                  //是否https接口
-      rewrite: (path) => path.replace(/^\/siyuan_sql/, '')
-    }
-  }
 }
 // const _axios = inject("axios");
-const _axios = axios.create(config)
-const message = useMessage()
+const _axios = axios.create(config);
+
  
 /* 请求拦截器（请求之前的操作） */
 _axios.interceptors.request.use(

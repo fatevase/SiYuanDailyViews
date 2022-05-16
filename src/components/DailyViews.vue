@@ -2,7 +2,8 @@
 import { useMessage } from 'naive-ui'
 import { defineComponent, h, ref, computed } from 'vue'
 import { isYesterday, addDays, isTomorrow } from 'date-fns'
-import ShowDaily from './ShowDaily.vue'
+import ShowDiary from './ShowDiary.vue'
+
 const message = useMessage();
 
 
@@ -58,20 +59,16 @@ const checkFresh=(month) =>{
 </script>
 
 <template>
-
     <n-space class="calender-layout" vertical justify="center">
         <n-calendar
             :value="default_select"
             #="{ year, month, date }"
             :is-date-disabled="isDateDisabled"
             :on-panel-change="freshCalendar"
-             @update:value="handleUpdateValue"
-        >
-            <!-- 这里要加不同的key 没明白为什么这么做props就可以正常获得值了 -->
-            <show-daily :note_date="showDate([year, month, date])" :key="year+'-'+month+'-'+date"></show-daily>
+             @update:value="handleUpdateValue">
+            <show-diary :note_date="showDate([year, month, date])" :key="year+'-'+month+'-'+date"> </show-diary>
         </n-calendar>
-    </n-space>
-    <n-space></n-space>
+    </n-space>    
 </template>
 
 <style scoped>

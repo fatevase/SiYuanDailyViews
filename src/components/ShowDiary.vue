@@ -4,6 +4,9 @@ import{ useMessage} from "naive-ui"
 import {NTag} from 'naive-ui'
 import ApiFunc from '../utils/request.js'
 
+// TODO: 增加笔记检索缓存
+// TODO: 增加标签
+
 export default {
     components:{NTag},
     // emits:['show_date'],
@@ -22,7 +25,7 @@ export default {
         window.$message = useMessage() // 全局消息提示 for request.js
 
         // 需要用这种方式来获取axios的值
-        // 这里用的技巧应该是动态加载数据，先载入ref，之后promise结束后更新值
+        // 动态加载数据，先载入ref，之后promise结束后更新值
         const note_exist = ref(false);
         const note_id = ref('0');
         const note_content = ref('null');
@@ -64,7 +67,6 @@ export default {
 
 }
 function jumpToNote(note_id){
-    // url like: siyuan://blocks/20220506192955-ur74gjd
     // siyuan://blocks/[block_id]
     window.location.href = 'siyuan://blocks/'+note_id;
 }
