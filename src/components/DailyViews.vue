@@ -59,16 +59,14 @@ const checkFresh=(month) =>{
 </script>
 
 <template>
-    <n-space class="calender-layout" vertical justify="center">
-        <n-calendar
-            :value="default_select"
-            #="{ year, month, date }"
-            :is-date-disabled="isDateDisabled"
-            :on-panel-change="freshCalendar"
-             @update:value="handleUpdateValue">
-            <show-diary :note_date="showDate([year, month, date])" :key="year+'-'+month+'-'+date"> </show-diary>
-        </n-calendar>
-    </n-space>    
+    <n-calendar
+        :value="default_select"
+        #="{ year, month, date }"
+        :is-date-disabled="isDateDisabled"
+        :on-panel-change="freshCalendar"
+            @update:value="handleUpdateValue">
+        <show-diary :note_date="showDate([year, month, date])" :key="year+'-'+month+'-'+date"> </show-diary>
+    </n-calendar>
 </template>
 
 <style scoped>
@@ -77,6 +75,9 @@ a {
 }
 .calender-layout {
     padding-bottom: 2em;
+}
+.main-layout {
+    min-width: 850px;
 }
 
 </style>

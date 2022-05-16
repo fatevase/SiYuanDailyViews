@@ -8,9 +8,9 @@ import { NConfigProvider, darkTheme, lightTheme } from 'naive-ui';
 
 <template>
   <n-config-provider :theme="lightTheme">
-  <n-message-provider >
-    <daily-views />
-  </n-message-provider>
+      <n-message-provider >
+        <daily-views />
+      </n-message-provider>
   </n-config-provider>
 </template>
 
