@@ -1,8 +1,9 @@
 <script setup>
 import { useMessage } from 'naive-ui'
-import { defineComponent, h, ref, computed } from 'vue'
+import { defineComponent, h, ref, provide, nextTick } from 'vue'
 import { isYesterday, addDays, isTomorrow } from 'date-fns'
 import ShowDiary from './ShowDiary.vue'
+import CalenderBar from './CalenderBar.vue'
 
 const message = useMessage();
 
@@ -10,6 +11,7 @@ const message = useMessage();
 const _date = new Date();
 const now_month = ref(_date.getMonth() + 1);
 const default_select = ref(addDays(_date.getTime(), 0).valueOf());
+const root_note_id = ref('0');
 // bugs? value was default selected
 // :default-value="now_unix_day" was not working
 
@@ -30,14 +32,15 @@ return false;
 }
 
 const handleUpdateValue=(_, { year, month, date })=> {
-    default_select.value = new Date(year+'-'+month+'-'+date);
+    default_select.value = new Date(year+'-'+month+'-'+date).getTime();
 }
 
-const showDate = (date) => {
+const organSearch = (data) => {
     return {
-        'year': date[0],
-        'month': date[1],
-        'day': date[2]
+        'year': data[0],
+        'month': data[1],
+        'day': data[2],
+        'root_note_id': data[3],
     }
 }
 
@@ -56,16 +59,42 @@ const checkFresh=(month) =>{
     }
 }
 
+const checkRootNoteId = (get_rn_id) => {
+    root_note_id.value = get_rn_id;
+}
+
+// const isRouterActive = ref(false)
+// provide('reload', () => {
+//   isRouterActive.value = false
+//   nextTick(() => {
+//     isRouterActive.value = true
+//   })
+// })
+
+const isRouterAlive = ref(true);
+const reload = () => {
+    isRouterAlive.value = false;
+    nextTick(() => {
+        isRouterAlive.value = true;
+    });
+};
+
+provide("reload", reload);
+
 </script>
 
 <template>
+    <calender-bar @setRootNoteId="checkRootNoteId" />
+    <n-divider />
     <n-calendar
         :value="default_select"
         #="{ year, month, date }"
         :is-date-disabled="isDateDisabled"
         :on-panel-change="freshCalendar"
             @update:value="handleUpdateValue">
-        <show-diary :note_date="showDate([year, month, date])" :key="year+'-'+month+'-'+date"> </show-diary>
+        <!-- 这里我提供了两种方式解决 v-for 循环生成组件后续传值的问题，其一是通过不同的key 传值，这样由于载入不同的key就可以获取不同的组件从而强制加载，
+            其二是 通过 reload函数， 通过v-if 判断然后刷新组件，子组件通过watch 传入的root_note_id 是否发生改变而刷新组件。-->
+        <show-diary :show_note_index="organSearch([year, month, date, root_note_id])" :key="'-'+year+'-'+month+'-'+date" v-if="isRouterAlive"> </show-diary>
     </n-calendar>
 </template>
 

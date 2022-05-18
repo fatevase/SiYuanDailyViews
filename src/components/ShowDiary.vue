@@ -1,5 +1,5 @@
 <script>
-import { defineProps,h, ref, onMounted } from "vue"
+import { h, ref, inject } from "vue"
 import{ useMessage} from "naive-ui"
 import {NTag} from 'naive-ui'
 import ApiFunc from '../utils/request.js'
@@ -11,17 +11,19 @@ export default {
     components:{NTag},
     // emits:['show_date'],
     props: {
-        note_date:{
+        show_note_index:{
             type: Object,
-            default: {year:2020,month:1,day:1},
+            default: {year:2020, month:1, day:1, root_note_id:0},
 
         }
     },
-    // async beforeMount(props){
-
-    // },
-
+    data(){
+        return {
+            renovate: inject('reload'),
+        }
+    },
     setup(props) {
+        
         window.$message = useMessage() // 全局消息提示 for request.js
 
         // 需要用这种方式来获取axios的值
@@ -29,28 +31,39 @@ export default {
         const note_exist = ref(false);
         const note_id = ref('0');
         const note_content = ref('null');
+        const note_labels = ref([]);
         (async () => {
-            const check_result = await checkExistNote(props.note_date);
+            const check_result = await checkExistNote(props.show_note_index);
             note_exist.value = check_result['note_exist'];
             note_content.value = check_result['show_data'];
             note_id.value = check_result['note_id'];
+            note_labels.value = check_result['note_labels'];
+
         })();
 
         function renderFunc(){
             return note_exist.value && h(
-                NTag,
-                {
-                    type:'info',
+                'ul',{class:"tag-full"},{default:()=>[
+                h(NTag,
+                    {
+                        type:'info',
+                        size:"large",
+                        class:"tag-full",
+                        onClick:()=>jumpToNote(note_id.value)},
+                    {default:()=>[note_content.value]}
+                ),
+                (note_labels.value.length>0)&&h(NTag,
+                    {type:'warning',
                     size:"large",
-                    class:"tag-full",
-                    onClick:()=>jumpToNote(note_id.value)
-                },
-                {default:()=>[note_content.value]}
+                    class:"tag-full"},
+                {default:()=>[""+note_labels.value[0]]}
+                )
+                ]}
             )
         }
   
         return ()=> renderFunc()
-        // 如果上式还不行就通过返回值，之后再template中调用，是一定可行的。
+        // 如果上式还不行就通过返回值，之后在template中调用。
         // render 函数中包含这个还待观察。
         // return {
         //     is_show,
@@ -63,6 +76,11 @@ export default {
         jumpToNote(note_id){
             window.open('siyuan://blocks/'+note_id)
         }
+    },
+    watch:{
+        show_note_index(newVal, oldVal){
+            this.renovate();
+        }
     }
 
 }
@@ -70,28 +88,64 @@ function jumpToNote(note_id){
     // siyuan://blocks/[block_id]
     window.location.href = 'siyuan://blocks/'+note_id;
 }
-async function checkExistNote(check_date){
-    const y = check_date['year'];
-    const m = check_date['month']>9?check_date['month']:'0'+check_date['month'];
-    const d = check_date['day']>9?check_date['day']:'0'+check_date['day'];
+async function checkExistNote(check_data){
+    const y = check_data['year'];
+    const m = check_data['month']>9?check_data['month']:'0'+check_data['month'];
+    const d = check_data['day']>9?check_data['day']:'0'+check_data['day'];
+    const box_id = check_data['root_note_id'];
+    // TODO: fixed diary path need change.
     let date_str = y+'-'+m+'-'+d;
-    const select_now_sql = {
-        "stmt": "SELECT content, ial, id FROM blocks WHERE ial LIKE '%title=\""+date_str+"\"%' limit 1"
+    const select_note_sql = {
+        "stmt": ""
     }
-    const note_info = await ApiFunc.getNoteByTitle(select_now_sql).then((res) =>{
+    // only for one labels
+    //sql https://stackoverflow.com/questions/1415328/combining-union-and-limit-operations-in-mysql-query
+    if(box_id != '0'){
+        select_note_sql['stmt'] = "SELECT * FROM (SELECT content, id FROM blocks WHERE ial LIKE '%"+date_str+"%' and box='"+box_id+"' limit 1) UNION " +
+                                "SELECT * FROM (SELECT content, id FROM blocks WHERE content LIKE '%#%#%' "+
+                                "and parent_id in (SELECT id FROM blocks WHERE ial LIKE '%"+date_str+"%' and box='"+box_id+"') limit 1)";
+    }else{
+        select_note_sql['stmt'] = "SELECT * FROM (SELECT content, id FROM blocks WHERE ial LIKE '%"+date_str+"%' limit 1) UNION " +
+                                "SELECT * FROM (SELECT content, id FROM blocks WHERE content LIKE '%#%#%' "+
+                                "and parent_id in (SELECT id FROM blocks WHERE ial LIKE '%"+date_str+"%') limit 1)";
+    }
+
+  
+    const note_info = await ApiFunc.getNoteByTitle(select_note_sql).then((res) =>{
         let note_exist = false;
         let show_data = '';
         let note_id = 0;
+        let note_labels = [];
         if(res['data'].length > 0){
-            note_exist = true;
-            show_data = res['data'][0]['content'];
-            note_id = res['data'][0]['id'];
+            for(var i in res['data']){
+                let label = getSyLabel(res['data'][i]['content']);
+                    console.log(res['data'][i]);
+                    if(label.length>0){
+                        note_labels.push(label);
+                    }else{
+                        note_exist = true;
+                        show_data = res['data'][i]['content'];
+                        note_id = res['data'][i]['id'];
+                    }
+            }
         }
-        const result = {'note_exist':note_exist, 'show_data':show_data, 'note_id':note_id};
+        const result = {'note_exist':note_exist, 'show_data':show_data, 'note_id':note_id, 'note_labels':note_labels};
         return result;
     })
     return note_info;
 
+}
+
+function getSyLabel(content){
+    if(content == null) return "";
+    if(content.length > 0){
+        let try_macth = content.match("\#(.*)\#");
+        
+        if(try_macth != null) {
+            return try_macth[1];
+        }
+    }
+    return "";
 }
 
 
@@ -107,5 +161,9 @@ async function checkExistNote(check_date){
 <style scoped>
 .tag-full{
     width: 100%;
+    padding-left:10px;
+    padding-right:10px;
+    margin-right: 20px;
+    margin-left: -5px;
 }
 </style>

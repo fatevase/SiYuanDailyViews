@@ -26,13 +26,27 @@ export default defineConfig({
   server: {
     port: 3333, // 配置dev端口
     proxy: {
-      '^/siyuan_sql': {
+      '^/sy_sql': {
           target: 'http://127.0.0.1:6806/api/query/sql',  //接口域名
           changeOrigin: true,                             //是否跨域
           ws: true,                                       //是否代理 websockets
           secure: false,                                  //是否https接口
-        rewrite: (path) => path.replace(/^\/siyuan_sql/, ''),
-      }
+        rewrite: (path) => path.replace(/^\/sy_sql/, ''),
+      },
+      '^/sy_gboxn': {
+          target: 'http://127.0.0.1:6806/api/notebook/lsNotebooks',  //接口域名
+          changeOrigin: true,                             //是否跨域
+          ws: true,                                       //是否代理 websockets
+          secure: false,                                  //是否https接口
+        rewrite: (path) => path.replace(/^\/sy_gboxn/, ''),
+      },
+      '^/sy_gnconfig': {
+          target: 'http://127.0.0.1:6806/api/notebook/getNotebookConf',  //接口域名
+          changeOrigin: true,                             //是否跨域
+          ws: true,                                       //是否代理 websockets
+          secure: false,                                  //是否https接口
+        rewrite: (path) => path.replace(/^\/sy_gnconfig/, ''),
+      },
     }
   },
 
