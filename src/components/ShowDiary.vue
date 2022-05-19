@@ -3,6 +3,7 @@ import { h, ref, inject } from "vue"
 import{ useMessage} from "naive-ui"
 import {NTag} from 'naive-ui'
 import ApiFunc from '../utils/request.js'
+import randTools from '../utils/randomTools.js'
 
 // TODO: 增加笔记检索缓存
 // TODO: 增加标签
@@ -32,18 +33,19 @@ export default {
         const note_id = ref('0');
         const note_content = ref('null');
         const note_labels = ref([]);
+        const random_color = ref('#000000');
         (async () => {
             const check_result = await checkExistNote(props.show_note_index);
             note_exist.value = check_result['note_exist'];
             note_content.value = check_result['show_data'];
             note_id.value = check_result['note_id'];
             note_labels.value = check_result['note_labels'];
-
+            random_color.value = randTools.randomColor(note_labels.value);
         })();
 
-        function renderFunc(){
+        function renderAllTemplate(){
             return note_exist.value && h(
-                'ul',{class:"tag-full"},{default:()=>[
+                'ul',{class:"tag-ul"},{default:()=>[
                 h(NTag,
                     {
                         type:'info',
@@ -52,17 +54,27 @@ export default {
                         onClick:()=>jumpToNote(note_id.value)},
                     {default:()=>[note_content.value]}
                 ),
-                (note_labels.value.length>0)&&h(NTag,
-                    {type:'warning',
-                    size:"large",
-                    class:"tag-full"},
-                {default:()=>[""+note_labels.value[0]]}
-                )
+                (note_labels.value.length>0)&&
+                note_labels.value.map(item=>h(NTag,{
+                    round:true,
+                    size:'small',
+                    color:{'color':random_color.value,
+                            'borderColor': randTools.colorReverse(random_color.value)},
+                },{default:()=>[item]}))
+                // h(NTag,
+                //     {
+                //     round:true,
+                //     size:'small',
+                //     color:{'color':random_color.value, 'textColor': '#f0f0f0', 
+                //             'borderColor': randTools.colorReverse(random_color.value)},
+                //     },
+                // {default:()=>[""+note_labels.value[0]]}
+                // )
                 ]}
             )
         }
-  
-        return ()=> renderFunc()
+
+        return ()=> renderAllTemplate()
         // 如果上式还不行就通过返回值，之后在template中调用。
         // render 函数中包含这个还待观察。
         // return {
@@ -99,15 +111,16 @@ async function checkExistNote(check_data){
         "stmt": ""
     }
     // only for one labels
-    //sql https://stackoverflow.com/questions/1415328/combining-union-and-limit-operations-in-mysql-query
+    // sql https://stackoverflow.com/questions/1415328/combining-union-and-limit-operations-in-mysql-query
+    // support 3 labels
     if(box_id != '0'){
         select_note_sql['stmt'] = "SELECT * FROM (SELECT content, id FROM blocks WHERE ial LIKE '%"+date_str+"%' and box='"+box_id+"' limit 1) UNION " +
                                 "SELECT * FROM (SELECT content, id FROM blocks WHERE content LIKE '%#%#%' "+
-                                "and parent_id in (SELECT id FROM blocks WHERE ial LIKE '%"+date_str+"%' and box='"+box_id+"') limit 1)";
+                                "and parent_id in (SELECT id FROM blocks WHERE ial LIKE '%"+date_str+"%' and box='"+box_id+"') limit 3)";
     }else{
         select_note_sql['stmt'] = "SELECT * FROM (SELECT content, id FROM blocks WHERE ial LIKE '%"+date_str+"%' limit 1) UNION " +
                                 "SELECT * FROM (SELECT content, id FROM blocks WHERE content LIKE '%#%#%' "+
-                                "and parent_id in (SELECT id FROM blocks WHERE ial LIKE '%"+date_str+"%') limit 1)";
+                                "and parent_id in (SELECT id FROM blocks WHERE ial LIKE '%"+date_str+"%') limit 3)";
     }
 
   
@@ -129,7 +142,8 @@ async function checkExistNote(check_data){
                     }
             }
         }
-        const result = {'note_exist':note_exist, 'show_data':show_data, 'note_id':note_id, 'note_labels':note_labels};
+        const result = {'note_exist':note_exist, 'show_data':show_data,
+                        'note_id':note_id, 'note_labels':note_labels};
         return result;
     })
     return note_info;
@@ -159,11 +173,17 @@ function getSyLabel(content){
 </template>
 
 <style scoped>
+.tag-ul{
+    display: flex;
+    flex-direction: row;
+    /*justify-content: flex-start;
+    align-items: center; */
+    flex-wrap: wrap;
+    margin: 0;
+    padding: 0;
+    min-width: 80px;
+}
 .tag-full{
     width: 100%;
-    padding-left:10px;
-    padding-right:10px;
-    margin-right: 20px;
-    margin-left: -5px;
 }
 </style>

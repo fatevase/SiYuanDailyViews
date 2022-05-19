@@ -1,15 +1,20 @@
 <script setup>
-import {ref, watch} from 'vue'
+import {ref, watch, inject} from 'vue'
 import ApiFunc from '../utils/request.js'
+import {Notebook24Regular, NotebookLightning24Regular, ArrowCounterclockwise12Regular,
+WeatherSunny28Filled,WeatherMoon16Filled, ArrowOutlineUpRight32Regular,
+} from '@vicons/fluent'
 // TODO: 可选择仅显示某一个笔记本下的日记
-    const optionsRef = ref([
-        {
-        label: 'Null',
-        value: '0'
-        }
-    ])
-const select_value = ref(0);
-const emit = defineEmits(['setRootNoteId']);
+const optionsRef = ref([
+    // {
+    // label: '选择你的笔记本',
+    // value: '0'
+    // }
+])
+const renovate = inject('reload');
+const select_value = ref();
+const emit = defineEmits(['setRootNoteId', 'setThemeValue']);
+const show_select_list = ref(false);
 // test using cache.
 // only support string
 if (typeof(Storage) !== "undefined") {
@@ -38,19 +43,13 @@ if (typeof(Storage) !== "undefined") {
 
 (async () => {
     const note_list = await getAllRootNotes();
-
-    if(note_list.length > 0){
-        const splice_i = optionsRef.value.findIndex(item => item['value'] == '0');
-        if(splice_i >= 0){
-            optionsRef.value.splice(splice_i, 1);
-        }
-        // 如果存在note，就把占位的options剔除掉
+    if (note_list.length > 0){
+        optionsRef.value = [];
+        // 清空之前的数据 刷新notebook box list
     }
+
     for(var nslot in note_list){
-        let splice_i = optionsRef.value.findIndex(item => item.value ===  note_list[nslot].id);
-        if(splice_i >= 0){
-            optionsRef.value.splice(splice_i, 1);
-        }
+        console.log('got box note: ' + note_list[nslot].id + ' ' + note_list[nslot].name + ' ' + note_list[nslot].sort);
         optionsRef.value.push(
             {
                 label: `${note_list[nslot].sort} - ${note_list[nslot].name}`,
@@ -63,18 +62,20 @@ if (typeof(Storage) !== "undefined") {
 
 
 
-watch(
-	() => select_value.value,
-	(newVal, oldVal) => {
-        // if oldVal != newVal{}
-        if (oldVal != newVal){
-            emit('setRootNoteId', newVal);
-            console.log(newVal, oldVal);
-            localStorage.setItem("siyuan_calender_bar_default_selected", newVal);
-        }
-	},
-	{ immediate: true, deep: true }
-);
+// watch(
+// 	() => select_value.value,
+// 	(newVal, oldVal) => {
+//         // if oldVal != newVal{}
+//         if (oldVal != newVal){
+//             emit('setRootNoteId', newVal);
+//             console.log(newVal, oldVal);
+//             if (newVal.value != '0'){
+//                 localStorage.setItem("siyuan_calender_bar_default_selected", newVal);
+//             }
+//         }
+// 	},
+// 	{ immediate: true, deep: true }
+// );
 
 async function getAllRootNotes(){
     const post_data = {}
@@ -106,16 +107,105 @@ const handleScroll = (e) => {
         localStorage.setItem("siyuan_calender_bar_options", JSON.stringify(optionsRef.value));
     }
 }
+
+const handleUpdateSelect = (svalue, options) => {
+    // 这里处理回调的点击事件，就不用watch来监听了。
+    if (svalue != select_value.value){
+        select_value.value = svalue;
+        emit('setRootNoteId', svalue);
+        if (svalue != '0'){
+            localStorage.setItem("siyuan_calender_bar_default_selected", svalue);
+        }
+    }
+
+}
+
+const refreshComps = () => {
+    renovate();
+}
+
+const changeThemes = (value) => {
+    console.log("------value:"+value);
+    if (value){
+        emit('setThemeValue', 'dark');
+    }else{
+        emit('setThemeValue', 'light');
+    }
+}
+
 </script>
 
 <template>
-  <n-select
-    v-model:value="select_value"
-    :options="optionsRef"
-    :reset-menu-on-options-change="false"
-    @scroll="handleScroll"
-  />
+
+<n-collapse default-expanded-names="1" accordion>
+<n-collapse-item title=" Menu" name="1">
+    <template #arrow>
+      <n-icon :size="24">
+        <ArrowOutlineUpRight32Regular />
+      </n-icon>
+    </template>
+
+<n-grid x-gap='12' :cols='3'>
+    <n-gi></n-gi>
+    <n-gi>
+        <n-select
+            v-model:value="select_value"
+            :options="optionsRef"
+            :reset-menu-on-options-change="false"
+            :on-update:value="handleUpdateSelect"
+            v-model:show="show_select_list"
+            @scroll="handleScroll"
+            placeholder="-------选择对应日记的笔记本-------">
+            <template #arrow>
+            <transition name="slide-left">
+                <notebook-lightning-24-regular v-if="show_select_list" />
+                <notebook-24-regular v-else />
+            </transition>
+            </template>
+        </n-select>
+    </n-gi>
+    <n-gi>
+        <n-grid x-gap="12" :cols='2'>
+            <n-gi>
+                <n-button tertiary round :on-click="refreshComps" size="small">
+                    <template #icon>
+                        <n-icon>
+                        <arrow-counterclockwise-12-regular />
+                        </n-icon>
+                    </template>
+                        刷新页面
+                </n-button>    
+            </n-gi>
+            <n-gi>
+                <n-switch 
+                    :on-update:value="changeThemes"
+                    size="large">
+                    <template #checked-icon>
+                        <n-icon :component="WeatherMoon16Filled" />
+                    </template>
+                    <template #unchecked-icon>
+                        <n-icon :component="WeatherSunny28Filled" />
+                    </template>
+                    <template #checked>
+                     黑夜
+                    </template>
+                    <template #unchecked>
+                    明亮
+                    </template>
+                </n-switch>         
+            </n-gi>
+        </n-grid>
+    </n-gi>
+</n-grid>
+    <n-divider />
+</n-collapse-item>
+
+</n-collapse>
+
+
+
 </template>
 
 <script scoped>
+
 </script>

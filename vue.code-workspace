@@ -4,5 +4,37 @@
 			"path": "."
 		}
 	],
-	"settings": {}
+	"settings": {
+		"colorInfo.languages": [
+			{
+				"selector": "css",
+				"colors": "css"
+			},
+			{
+				"selector": "html",
+				"colors": "css"
+			},
+			{
+				"selector": "vue",
+				"colors": "css"
+			},
+			// JS
+			{
+				"selector": "javascript",
+				"colors": "css"
+			},
+			{
+				"selector": "javascriptreact",
+				"colors": "css"
+			},
+			{
+				"selector": "typescript",
+				"colors": "css"
+			},
+			{
+				"selector": "typescriptreact",
+				"colors": "css"
+			},
+		]
+	}
 }
