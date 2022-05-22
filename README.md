@@ -1,7 +1,7 @@
 # Daily Views
 
 ### 以日历的形式显示你之前创建过的日记。
-![preview](https://github.com/fatevase/SiYuanDailyView/blob/main/preview.png)
+![preview](https://raw.githubusercontent.com/fatevase/SiYuanDailyViews/main/preview.png)
 
 ### 功能
 * 显示对应笔记下的日记。
