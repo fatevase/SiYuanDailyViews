@@ -35,6 +35,7 @@ if (typeof(Storage) !== "undefined") {
         } catch (error) {
             select_value.value = optionsRef.value[-1].value;
         }
+        emit('setRootNoteId', select_value.value);
     }
     if(localStorage.getItem("siyuan_calender_bar_theme_switch") != null){
           theme_value.value = localStorage.getItem("siyuan_calender_bar_theme_switch") == "true";
@@ -143,7 +144,7 @@ const changeThemes = (value) => {
 
 <template>
 
-<n-collapse default-expanded-names="1" accordion>
+<n-collapse accordion>
 <n-collapse-item title=" Menu" name="1">
     <template #arrow>
       <n-icon :size="24">
