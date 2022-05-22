@@ -4,6 +4,7 @@ import { defineComponent, h, ref, provide, nextTick } from 'vue'
 import { isYesterday, addDays, isTomorrow } from 'date-fns'
 import ShowDiary from './ShowDiary.vue'
 import CalenderBar from './CalenderBar.vue'
+import dateTools from '../utils/dateTools.js'
 
 const message = useMessage();
 
@@ -32,7 +33,8 @@ return false;
 }
 
 const handleUpdateValue=(_, { year, month, date })=> {
-    default_select.value = new Date(year+'-'+month+'-'+date).getTime();
+    default_select.value = new Date(dateTools.formatDate(year, month, date)).getTime();
+    console.log(dateTools.formatDate(year, month, date));
 }
 
 const organSearch = (data) => {

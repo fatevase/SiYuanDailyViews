@@ -61,15 +61,6 @@ export default {
                     color:{'color':random_color.value,
                             'borderColor': randTools.colorReverse(random_color.value)},
                 },{default:()=>[item]}))
-                // h(NTag,
-                //     {
-                //     round:true,
-                //     size:'small',
-                //     color:{'color':random_color.value, 'textColor': '#f0f0f0', 
-                //             'borderColor': randTools.colorReverse(random_color.value)},
-                //     },
-                // {default:()=>[""+note_labels.value[0]]}
-                // )
                 ]}
             )
         }
@@ -91,7 +82,10 @@ export default {
     },
     watch:{
         show_note_index(newVal, oldVal){
-            this.renovate();
+            if(newVal.root_note_id != oldVal.root_note_id){
+                // 修复点击任意点都会闪一下的问题。
+                this.renovate()
+            }
         }
     }
 
@@ -132,7 +126,6 @@ async function checkExistNote(check_data){
         if(res['data'].length > 0){
             for(var i in res['data']){
                 let label = getSyLabel(res['data'][i]['content']);
-                    console.log(res['data'][i]);
                     if(label.length>0){
                         note_labels.push(label);
                     }else{

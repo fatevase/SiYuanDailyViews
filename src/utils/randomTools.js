@@ -69,7 +69,6 @@ function fakeRandom(seed=null){
 	let color_offest = 0x999999;
 	oldColor = '0x' + oldColor.replace(/#/g, '');
 	let str = '000000' + (0xFFFFFF - oldColor + color_offest).toString(16);
-	console.log(str.substring(str.length - 6, str.length));
 	return '#'+ str.substring(str.length - 6, str.length);
  }
  
