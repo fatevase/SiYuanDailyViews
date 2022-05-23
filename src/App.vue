@@ -6,6 +6,14 @@ import DailyViews from './components/DailyViews.vue';
 import { NConfigProvider, darkTheme, lightTheme } from 'naive-ui';
 
 const app_theme = ref(lightTheme);
+if (typeof(Storage) !== "undefined") {
+    if(localStorage.getItem("siyuan_calender_bar_theme_switch") != null){
+          app_theme.value = localStorage.getItem("siyuan_calender_bar_theme_switch") == "true"? darkTheme : lightTheme;
+    }
+} else {
+    // 抱歉！不支持 Web Storage ..
+
+}
 const checkThemeValue = (value) => {
     if (value === 'dark') {
         app_theme.value = darkTheme;

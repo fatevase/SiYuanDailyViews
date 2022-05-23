@@ -66,10 +66,9 @@ function fakeRandom(seed=null){
  * 不一定要完全的反色，可以加点偏移量使得两色看起来舒服
  */
  function colorReverse(oldColor){
-    let color_offest = 0x999999;
-    oldColor = '0x' + oldColor.replace(/#/g, '');
-    let str = '000000' + (0xFFFFFF - oldColor + color_offest).toString(16);
-    console.log(str.substring(str.length - 6, str.length));
-    return '#'+ str.substring(str.length - 6, str.length);
+	let color_offest = 0x999999;
+	oldColor = '0x' + oldColor.replace(/#/g, '');
+	let str = '000000' + (0xFFFFFF - oldColor + color_offest).toString(16);
+	return '#'+ str.substring(str.length - 6, str.length);
  }
  

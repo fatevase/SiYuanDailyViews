@@ -15,6 +15,7 @@ const renovate = inject('reload');
 const select_value = ref();
 const emit = defineEmits(['setRootNoteId', 'setThemeValue']);
 const show_select_list = ref(false);
+const theme_value = ref(true);
 // test using cache.
 // only support string
 if (typeof(Storage) !== "undefined") {
@@ -34,6 +35,10 @@ if (typeof(Storage) !== "undefined") {
         } catch (error) {
             select_value.value = optionsRef.value[-1].value;
         }
+        emit('setRootNoteId', select_value.value);
+    }
+    if(localStorage.getItem("siyuan_calender_bar_theme_switch") != null){
+          theme_value.value = localStorage.getItem("siyuan_calender_bar_theme_switch") == "true";
     }
 } else {
     // 抱歉！不支持 Web Storage ..
@@ -131,13 +136,15 @@ const changeThemes = (value) => {
     }else{
         emit('setThemeValue', 'light');
     }
+    theme_value.value = value;
+    localStorage.setItem("siyuan_calender_bar_theme_switch", value);
 }
 
 </script>
 
 <template>
 
-<n-collapse default-expanded-names="1" accordion>
+<n-collapse accordion>
 <n-collapse-item title=" Menu" name="1">
     <template #arrow>
       <n-icon :size="24">
@@ -177,7 +184,8 @@ const changeThemes = (value) => {
                 </n-button>    
             </n-gi>
             <n-gi>
-                <n-switch 
+                <n-switch
+                    :value='theme_value'
                     :on-update:value="changeThemes"
                     size="large">
                     <template #checked-icon>
