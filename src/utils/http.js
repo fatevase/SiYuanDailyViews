@@ -37,18 +37,18 @@ _axios.interceptors.response.use(
     if (res.data.code === 401 ) {
         window.$message.warning("无权限操作");
     }
-	if (res.data.code === 400 ) {
-	   window.$message.warning("请求网络失败");
-	}
-	if (res.data.code === 404 ) {
-	    window.$message.warning("请求网络失败");
-	}
+    if (res.data.code === 400 ) {
+       window.$message.warning("请求网络失败");
+    }
+    if (res.data.code === 404 ) {
+        window.$message.warning("请求网络失败");
+    }
     return res;
   },
   err => {
     if (err) {
       //在这里关闭请求时的loading动画效果
-	    window.$message.warning("请求网络失败");
+        window.$message.warning("请求网络失败");
     }
     return Promise.reject(err);
   }

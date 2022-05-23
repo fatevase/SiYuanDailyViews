@@ -63,8 +63,8 @@ if (typeof(Storage) !== "undefined") {
 
 
 // watch(
-// 	() => select_value.value,
-// 	(newVal, oldVal) => {
+//     () => select_value.value,
+//     (newVal, oldVal) => {
 //         // if oldVal != newVal{}
 //         if (oldVal != newVal){
 //             emit('setRootNoteId', newVal);
@@ -73,8 +73,8 @@ if (typeof(Storage) !== "undefined") {
 //                 localStorage.setItem("siyuan_calender_bar_default_selected", newVal);
 //             }
 //         }
-// 	},
-// 	{ immediate: true, deep: true }
+//     },
+//     { immediate: true, deep: true }
 // );
 
 async function getAllRootNotes(){
