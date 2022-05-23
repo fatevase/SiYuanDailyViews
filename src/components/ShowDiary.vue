@@ -32,15 +32,15 @@ export default {
         const note_exist = ref(false);
         const note_id = ref('0');
         const note_content = ref('null');
-        const note_labels = ref([]);
+        const note_tags = ref([]);
         const random_color = ref('#000000');
         (async () => {
             const check_result = await checkExistNote(props.show_note_index);
             note_exist.value = check_result['note_exist'];
             note_content.value = check_result['show_data'];
             note_id.value = check_result['note_id'];
-            note_labels.value = check_result['note_labels'];
-            random_color.value = randTools.randomColor(note_labels.value);
+            note_tags.value = check_result['note_tags'];
+            random_color.value = randTools.randomColor(note_tags.value);
         })();
 
         function renderAllTemplate(){
@@ -54,8 +54,8 @@ export default {
                         onClick:()=>jumpToNote(note_id.value)},
                     {default:()=>[note_content.value]}
                 ),
-                (note_labels.value.length>0)&&
-                note_labels.value.map(item=>h(NTag,{
+                (note_tags.value.length>0)&&
+                note_tags.value.map(item=>h(NTag,{
                     round:true,
                     size:'small',
                     color:{'color':random_color.value,
@@ -99,8 +99,8 @@ async function checkExistNote(check_data){
     const m = check_data['month']>9?check_data['month']:'0'+check_data['month'];
     const d = check_data['day']>9?check_data['day']:'0'+check_data['day'];
     const box_id = check_data['root_note_id'];
-    // TODO: fixed diary path need change.
-    let date_str = y+'-'+m+'-'+d;
+    // for sql. match any character
+    let date_str = y+'_'+m+'_'+d; 
     const select_note_sql = {
         "stmt": ""
     }
@@ -108,27 +108,37 @@ async function checkExistNote(check_data){
     // sql https://stackoverflow.com/questions/1415328/combining-union-and-limit-operations-in-mysql-query
     // support 3 labels
     if(box_id != '0'){
-        select_note_sql['stmt'] = "SELECT * FROM (SELECT content, id FROM blocks WHERE ial LIKE '%"+date_str+"%' and box='"+box_id+"' limit 1) UNION " +
-                                "SELECT * FROM (SELECT content, id FROM blocks WHERE content LIKE '%#%#%' "+
-                                "and parent_id in (SELECT id FROM blocks WHERE ial LIKE '%"+date_str+"%' and box='"+box_id+"') limit 3)";
+        select_note_sql['stmt'] = "SELECT * FROM (SELECT tag, content, id FROM blocks "+
+									"WHERE ial LIKE '%title=\""+date_str+"\"%' "+
+									"AND parent_id = '' AND content !='' AND box='"+box_id+"' GROUP BY content LIMIT 1) "+
+									"UNION SELECT * FROM (SELECT tag, content, id FROM blocks "+
+									"WHERE parent_id IN (SELECT id FROM blocks "+
+									"WHERE ial LIKE '%title=\""+date_str+"\"%' AND "+
+									"parent_id = '' AND box='"+box_id+"' LIMIT 1) AND tag !='' GROUP BY tag LIMIT 3)";
     }else{
-        select_note_sql['stmt'] = "SELECT * FROM (SELECT content, id FROM blocks WHERE ial LIKE '%"+date_str+"%' limit 1) UNION " +
-                                "SELECT * FROM (SELECT content, id FROM blocks WHERE content LIKE '%#%#%' "+
-                                "and parent_id in (SELECT id FROM blocks WHERE ial LIKE '%"+date_str+"%') limit 3)";
+        select_note_sql['stmt'] = "SELECT * FROM (SELECT tag, content, id FROM blocks "+
+									"WHERE ial LIKE '%title=\""+date_str+"\"%' "+
+									"AND parent_id = '' AND content !='' GROUP BY content LIMIT 1) "+
+									"UNION SELECT * FROM (SELECT tag, content, id FROM blocks "+
+									"WHERE parent_id IN (SELECT id FROM blocks "+
+									"WHERE ial LIKE '%title=\""+date_str+"\"%' AND "+
+									"parent_id = '' LIMIT 1) AND tag !='' GROUP BY tag LIMIT 3)";
     }
-
   
     const note_info = await ApiFunc.getNoteByTitle(select_note_sql).then((res) =>{
         let note_exist = false;
         let show_data = '';
         let note_id = 0;
-        let note_labels = [];
+        let note_tags = [];
         if(res['data'].length > 0){
+			console.log(res['data'])
             for(var i in res['data']){
-                let label = getSyLabel(res['data'][i]['content']);
+				if(res['data'][i]['tag'] != ''){
+					let label = getSyLabel(res['data'][i]['tag']);
                     if(label.length>0){
-                        note_labels.push(label);
-                    }else{
+                        note_tags.push(label);
+                    }
+				}else{
                         note_exist = true;
                         show_data = res['data'][i]['content'];
                         note_id = res['data'][i]['id'];
@@ -136,7 +146,7 @@ async function checkExistNote(check_data){
             }
         }
         const result = {'note_exist':note_exist, 'show_data':show_data,
-                        'note_id':note_id, 'note_labels':note_labels};
+                        'note_id':note_id, 'note_tags':note_tags};
         return result;
     })
     return note_info;

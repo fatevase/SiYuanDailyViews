@@ -13,6 +13,7 @@ export default defineConfig({
     //     drop_debugger: true,  //build是否移除debugger
     //   }                                     
     // },
+    chunkSizeWarningLimit: 2048,
     outDir: 'dist',
     rollupOptions:{ // 打包输出文件和脚手架格式相仿
       output:{
