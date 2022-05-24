@@ -91,8 +91,8 @@ provide("reload", reload);
 </script>
 
 <template>
-    <calender-bar @setRootNoteId="checkRootNoteId" @setThemeValue="checkThemeValue"/>
 
+    <calender-bar @setRootNoteId="checkRootNoteId" @setThemeValue="checkThemeValue"/>
     <n-calendar
         class="main-layout"
         :value="default_select"

@@ -1,8 +1,10 @@
 <script setup>
-import {ref, watch, inject} from 'vue'
+import {ref, watch, inject, nextTick} from 'vue'
+import { useMessage } from 'naive-ui';
 import ApiFunc from '../utils/request.js'
-import {Notebook24Regular, NotebookLightning24Regular, ArrowCounterclockwise12Regular,
+import {WindowDevTools24Regular,ArrowCounterclockwise12Regular,Notebook24Regular,NotebookLightning24Regular,
 WeatherSunny28Filled,WeatherMoon16Filled, ArrowOutlineUpRight32Regular,} from '@vicons/fluent'
+
 // TODO: 可选择仅显示某一个笔记本下的日记
 const optionsRef = ref([
     // {
@@ -10,6 +12,7 @@ const optionsRef = ref([
     // value: '0'
     // }
 ])
+const message = useMessage();
 const renovate = inject('reload');
 const select_value = ref();
 const emit = defineEmits(['setRootNoteId', 'setThemeValue']);
@@ -139,9 +142,104 @@ const changeThemes = (value) => {
     localStorage.setItem("siyuan_calender_bar_theme_switch", value);
 }
 
+const float_menu_x = ref(0)
+const float_menu_y = ref(0)
+const show_float_menu = ref(false)
+const handleSelect = (key) => {
+        show_float_menu.value = false
+        message.info(String(key))
+}
+
+const handleClick = (e) => {
+      if (show_float_menu.value) {
+        show_float_menu.value = false
+      } else {
+        show_float_menu.value = true
+        float_menu_x.value = e.clientX-e.offsetX+30
+        float_menu_y.value = e.clientY-e.offsetY
+      }
+    }
+const clickOutside = () => {
+    show_float_menu.value = false;
+}
 </script>
 
 <template>
+  <n-popover 
+    :show="show_float_menu" 
+    :on-clickoutside="clickOutside" 
+    :x="float_menu_x" :y="float_menu_y"
+    :flip="true"
+    width="150px"
+    placement="top-end"
+    trigger="manual">
+    <n-list>
+        <template #header>
+            <h3 style="margin:0px; margin-top:-20px">Settings</h3>
+        </template>
+        <n-list-item>
+            <n-thing title="" title-extra="选择需要显示的日记">
+            <!-- <n-ellipsis style="max-width: 240px"> -->
+            <n-select
+                v-model:value="select_value"
+                :options="optionsRef"
+                :reset-menu-on-options-change="false"
+                :on-update:value="handleUpdateSelect"
+                v-model:show="show_select_list"
+                @scroll="handleScroll"
+                placeholder="选择对应日记的笔记本"
+                style="max-width: 150px;">
+                <template #arrow>
+                    <transition name="slide-left">
+                        <notebook-lightning-24-regular v-if="show_select_list" />
+                        <notebook-24-regular v-else />
+                    </transition>
+                </template>
+            </n-select>
+            <!-- </n-ellipsis> -->
+            </n-thing>
+        </n-list-item>
+        <n-list-item>
+            <n-space justify="center">
+            <n-switch
+                :value='theme_value'
+                :on-update:value="changeThemes"
+                size="large">
+                <template #checked-icon>
+                    <n-icon :component="WeatherMoon16Filled" />
+                </template>
+                <template #unchecked-icon>
+                    <n-icon :component="WeatherSunny28Filled" />
+                </template>
+                <template #checked>
+                    黑夜
+                </template>
+                <template #unchecked>
+                明亮
+                </template>
+            </n-switch>
+            </n-space>
+        </n-list-item>
+        <n-list-item>
+            <n-space justify="center">
+            <n-button tertiary round :on-click="refreshComps" size="small">
+                <template #icon>
+                    <n-icon>
+                    <arrow-counterclockwise-12-regular />
+                    </n-icon>
+                </template>
+                    刷新页面
+            </n-button>
+            </n-space>
+        </n-list-item>
+    </n-list>
+  </n-popover>
+
+    <n-back-top :visibility-height="0" style="margin-right:0px; opacity:0.8" :onclick="handleClick">
+    <n-icon :size="28"><WindowDevTools24Regular/></n-icon>
+    </n-back-top>
+
+<!-- 上面是悬浮的menu，下面是顶部的bar -->
 
 <n-collapse accordion>
 <n-collapse-item title=" Menu" name="1">

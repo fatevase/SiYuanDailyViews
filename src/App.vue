@@ -32,11 +32,16 @@ const overridesTheme = ()=>{
     if(app_theme.value.name == 'dark'){
         return  {
             "common": {
-                "baseColor": "#303030FF",
-                "modalColor": "rgba(13, 13, 14, 1)",
-                "tagColor": "rgba(37, 37, 37, 1)",
-                "bodyColor": "rgba(50,50,50,0.2)",
-                "popoverColor": "rgba(74, 74, 74, 1)"
+                "color": "rgba(50,50,50,0.2)",
+                "bodyColor": "rgba(50,50,50,0.4)",
+                "borderColorModal":"rgba(50,50,50,0.8)",
+                "popoverColor": "rgba(50,50,50,1)"
+            },
+            "List": {
+                "color": "rgba(50,50,50,0.0)"
+            },
+            "Tag":{
+                "textColorInfo":"#FFFFFF",
             }
         };
     }else{
