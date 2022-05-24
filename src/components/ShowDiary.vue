@@ -75,9 +75,7 @@ export default {
 
     },
     method:{
-        jumpToNote(note_id){
-            window.open('siyuan://blocks/'+note_id)
-        }
+
     },
     watch:{
         show_note_index(newVal, oldVal){
@@ -90,10 +88,9 @@ export default {
 
 }
 function jumpToNote(note_id){
-    // siyuan://blocks/[block_id]
-	// window.$message.info('siyuan://blocks/'+note_id);
-    window.location.href = 'siyuan://blocks/'+note_id;
+	window.open('siyuan://blocks/'+note_id)
 }
+
 async function checkExistNote(check_data){
     const y = check_data['year'];
     const m = check_data['month']>9?check_data['month']:'0'+check_data['month'];
