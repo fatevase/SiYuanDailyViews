@@ -24,7 +24,6 @@ export default {
         }
     },
     setup(props) {
-        
         window.$message = useMessage() // 全局消息提示 for request.js
 
         // 需要用这种方式来获取axios的值
@@ -92,6 +91,7 @@ export default {
 }
 function jumpToNote(note_id){
     // siyuan://blocks/[block_id]
+	// window.$message.info('siyuan://blocks/'+note_id);
     window.location.href = 'siyuan://blocks/'+note_id;
 }
 async function checkExistNote(check_data){

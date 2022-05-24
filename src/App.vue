@@ -17,10 +17,10 @@ const checkThemeValue = (value) => {
 }
 
 try{
-    let mode = window.top.siyuan.config.appearance.mode; // 主题模式, 0: 明亮, 1: 暗黑
+    let mode = window.top.siyuan.config.appearance.mode + ''; // 主题模式, 0: 明亮, 1: 暗黑
     checkThemeValue(mode);
     // dark_background = getComputedStyle(document.documentElement).getPropertyValue('--b3-theme-background');
-    localStorage.setItem("siyuan_calender_bar_theme_switch", mode=='0'?'true':'false');
+    localStorage.setItem("siyuan_calender_bar_theme_switch", mode=='0'?'false':'true');
 }catch(e){
     checkThemeValue('light');
     localStorage.setItem("siyuan_calender_bar_theme_switch", 'false');
@@ -28,7 +28,6 @@ try{
 
 
 const overridesTheme = ()=>{
-    console.log(app_theme.value.name)
     if(app_theme.value.name == 'dark'){
         return  {
             "common": {
@@ -58,7 +57,7 @@ const overridesTheme = ()=>{
   <n-config-provider 
     :theme="app_theme"
     :theme-overrides="overridesTheme()">
-    <n-theme-editor>
+    <!-- <n-theme-editor> -->
     <n-scrollbar style="max-height: 780px" x-scrollabl>
       <n-message-provider >
         <daily-views @setThemeValue="checkThemeValue" />
@@ -66,7 +65,7 @@ const overridesTheme = ()=>{
     </n-scrollbar>
     <!-- 处理响应式的组件 -->
     <n-global-style />
-    </n-theme-editor>
+    <!-- </n-theme-editor> -->
   </n-config-provider>
 </template>
 

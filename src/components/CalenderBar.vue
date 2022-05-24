@@ -129,6 +129,11 @@ const handleUpdateSelect = (svalue, options) => {
 }
 
 const refreshComps = () => {
+	let mode = '0';
+	try{
+		mode = window.top.siyuan.config.appearance.mode + ''; // 主题模式, 0: 明亮, 1: 暗黑
+	}catch (error) {}
+	changeThemes(mode=='0'?false:true);
     renovate();
 }
 
