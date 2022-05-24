@@ -4,36 +4,64 @@
 import {ref} from 'vue';
 import DailyViews from './components/DailyViews.vue';
 import { NConfigProvider, darkTheme, lightTheme } from 'naive-ui';
+import { NThemeEditor } from 'naive-ui'
 
-const app_theme = ref(lightTheme);
-if (typeof(Storage) !== "undefined") {
-    if(localStorage.getItem("siyuan_calender_bar_theme_switch") != null){
-          app_theme.value = localStorage.getItem("siyuan_calender_bar_theme_switch") == "true"? darkTheme : lightTheme;
-    }
-} else {
-    // 抱歉！不支持 Web Storage ..
+const app_theme = ref(null);
 
-}
 const checkThemeValue = (value) => {
-    if (value === 'dark') {
+    if (value == 'dark' || value == '1') {
         app_theme.value = darkTheme;
     }else{
         app_theme.value = lightTheme;
     }
 }
 
+try{
+    let mode = window.top.siyuan.config.appearance.mode; // 主题模式, 0: 明亮, 1: 暗黑
+    checkThemeValue(mode);
+    // dark_background = getComputedStyle(document.documentElement).getPropertyValue('--b3-theme-background');
+    localStorage.setItem("siyuan_calender_bar_theme_switch", mode=='0'?'true':'false');
+}catch(e){
+    checkThemeValue('light');
+    localStorage.setItem("siyuan_calender_bar_theme_switch", 'false');
+}
 
+
+const overridesTheme = ()=>{
+    console.log(app_theme.value.name)
+    if(app_theme.value.name == 'dark'){
+        return  {
+            "common": {
+                "baseColor": "#303030FF",
+                "modalColor": "rgba(13, 13, 14, 1)",
+                "tagColor": "rgba(37, 37, 37, 1)",
+                "bodyColor": "rgba(50,50,50,0.2)",
+                "popoverColor": "rgba(74, 74, 74, 1)"
+            }
+        };
+    }else{
+        console.log('over ->light');
+        return  {
+            "common": {
+            }
+        };
+    }
+}
 </script>
 
 <template>
-  <n-config-provider :theme="app_theme">
-    <n-scrollbar style="max-height: 720px" x-scrollabl>
+  <n-config-provider 
+    :theme="app_theme"
+    :theme-overrides="overridesTheme()">
+    <n-theme-editor>
+    <n-scrollbar style="max-height: 780px" x-scrollabl>
       <n-message-provider >
         <daily-views @setThemeValue="checkThemeValue" />
       </n-message-provider>
     </n-scrollbar>
     <!-- 处理响应式的组件 -->
     <n-global-style />
+    </n-theme-editor>
   </n-config-provider>
 </template>
 

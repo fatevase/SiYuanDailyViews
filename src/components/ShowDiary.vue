@@ -131,7 +131,6 @@ async function checkExistNote(check_data){
         let note_id = 0;
         let note_tags = [];
         if(res['data'].length > 0){
-			console.log(res['data'])
             for(var i in res['data']){
 				if(res['data'][i]['tag'] != ''){
 					let label = getSyLabel(res['data'][i]['tag']);

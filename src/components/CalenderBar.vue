@@ -2,8 +2,7 @@
 import {ref, watch, inject} from 'vue'
 import ApiFunc from '../utils/request.js'
 import {Notebook24Regular, NotebookLightning24Regular, ArrowCounterclockwise12Regular,
-WeatherSunny28Filled,WeatherMoon16Filled, ArrowOutlineUpRight32Regular,
-} from '@vicons/fluent'
+WeatherSunny28Filled,WeatherMoon16Filled, ArrowOutlineUpRight32Regular,} from '@vicons/fluent'
 // TODO: 可选择仅显示某一个笔记本下的日记
 const optionsRef = ref([
     // {
@@ -83,6 +82,7 @@ if (typeof(Storage) !== "undefined") {
 // );
 
 async function getAllRootNotes(){
+    // 可以通过 window.config.top.notebooks 获取到所有的box id ...不建议 建议直接使用给的api
     const post_data = {}
     const note_info = await ApiFunc.getAllRootNotes(post_data).then((res) =>{
         if(res['data']['notebooks'].length > 0){
@@ -130,7 +130,6 @@ const refreshComps = () => {
 }
 
 const changeThemes = (value) => {
-    console.log("------value:"+value);
     if (value){
         emit('setThemeValue', 'dark');
     }else{
