@@ -5,27 +5,22 @@ import {ref} from 'vue';
 import DailyViews from './components/DailyViews.vue';
 import { NConfigProvider, darkTheme, lightTheme } from 'naive-ui';
 import { NThemeEditor } from 'naive-ui'
+import dataset from './utils/dataset.js';
+const app_theme = ref(lightTheme);
 
-const app_theme = ref(null);
 
-const checkThemeValue = (value) => {
+Init();
+
+adjustTheme();
+
+
+function checkThemeValue(value){
     if (value == 'dark' || value == '1') {
         app_theme.value = darkTheme;
     }else{
         app_theme.value = lightTheme;
     }
 }
-
-try{
-    let mode = window.top.siyuan.config.appearance.mode + ''; // 主题模式, 0: 明亮, 1: 暗黑
-    checkThemeValue(mode);
-    // dark_background = getComputedStyle(document.documentElement).getPropertyValue('--b3-theme-background');
-    localStorage.setItem("siyuan_calender_bar_theme_switch", mode=='0'?'false':'true');
-}catch(e){
-    checkThemeValue('light');
-    localStorage.setItem("siyuan_calender_bar_theme_switch", 'false');
-}
-
 
 const overridesTheme = ()=>{
     if(app_theme.value.name == 'dark'){
@@ -50,6 +45,38 @@ const overridesTheme = ()=>{
             }
         };
     }
+}
+
+function adjustTheme(){
+	let save_data = {}
+	try{
+		let mode = window.top.siyuan.config.appearance.mode + ''; // 主题模式, 0: 明亮, 1: 暗黑
+		checkThemeValue(mode);
+		// dark_background = getComputedStyle(document.documentElement).getPropertyValue('--b3-theme-background');
+		save_data[window.$baseid] = {
+		"custom-theme-value": mode=='0'? 'false':'true',
+		}
+	}catch(e){
+		dataset.queryData(window.$baseid, 'custom-theme-value').then(data=>{
+			checkThemeValue(data);
+		});
+	}
+	dataset.saveData(save_data);
+}
+
+function Init(){
+	let id = 'SiYuan-DailyViews';
+	if (window.frameElement) {
+		id = window.frameElement.parentElement.parentElement.dataset.nodeId;
+	}else {
+		const search = location.search
+		const obj = new URLSearchParams(search);
+		if(obj.has('blockid')){
+			id = obj.get('blockid');
+		}
+	}
+	console.log("got widget id.",id);
+	window.$baseid = id
 }
 </script>
 

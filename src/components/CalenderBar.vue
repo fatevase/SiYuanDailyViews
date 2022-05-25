@@ -1,7 +1,8 @@
 <script setup>
 import {ref, watch, inject, nextTick} from 'vue'
 import { useMessage } from 'naive-ui';
-import ApiFunc from '../utils/request.js'
+import ApiFunc from '../utils/request.js';
+import dataset from '../utils/dataset.js';
 import {WindowDevTools24Regular,ArrowCounterclockwise12Regular,Notebook24Regular,NotebookLightning24Regular,
 WeatherSunny28Filled,WeatherMoon16Filled, ArrowOutlineUpRight32Regular,} from '@vicons/fluent'
 
@@ -20,33 +21,20 @@ const show_select_list = ref(false);
 const theme_value = ref(true);
 // test using cache.
 // only support string
-if (typeof(Storage) !== "undefined") {
-    if(localStorage.getItem("siyuan_calender_bar_options") != null){
-        try {
-            let json_local_data = JSON.parse(localStorage.getItem("siyuan_calender_bar_options"));
-            if(json_local_data != null){
-                optionsRef.value = json_local_data;
-            }
-        } catch (error) {
-            
-        }
-    }
-    if(localStorage.getItem("siyuan_calender_bar_default_selected") != null){
-        try {
-            select_value.value = localStorage.getItem("siyuan_calender_bar_default_selected");
-        } catch (error) {
-            select_value.value = optionsRef.value[-1].value;
-        }
-        emit('setRootNoteId', select_value.value);
-    }
-    if(localStorage.getItem("siyuan_calender_bar_theme_switch") != null){
-          theme_value.value = localStorage.getItem("siyuan_calender_bar_theme_switch") == "true";
-    }
-} else {
-    // 抱歉！不支持 Web Storage ..
 
-}
 
+dataset.queryData(window.$baseid, 
+ ['custom-notebook-list', 'custom-current-notebox', 'custom-theme-value']).then(
+	(data)=>{
+		if(data!=null){
+			console.log("CalenderBar queryData:", data);
+			optionsRef.value = JSON.parse(data['custom-notebook-list']);
+			select_value.value = data['custom-current-notebox'];
+			theme_value.value = data['custom-theme-value']=='dark'?true:false;
+			emit('setRootNoteId', select_value.value==null?0:select_value.value);
+		}
+	}
+);
 
 (async () => {
     const note_list = await getAllRootNotes();
@@ -56,7 +44,7 @@ if (typeof(Storage) !== "undefined") {
     }
 
     for(var nslot in note_list){
-        console.log('got box note: ' + note_list[nslot].id + ' ' + note_list[nslot].name + ' ' + note_list[nslot].sort);
+        // console.log('got box note: ' + note_list[nslot].id + ' ' + note_list[nslot].name + ' ' + note_list[nslot].sort);
         optionsRef.value.push(
             {
                 label: `${note_list[nslot].sort} - ${note_list[nslot].name}`,
@@ -64,7 +52,12 @@ if (typeof(Storage) !== "undefined") {
             }
         );
     }
-    localStorage.setItem("siyuan_calender_bar_options", JSON.stringify(optionsRef.value));
+	let save_data = {}
+	save_data[window.$baseid] = {
+		"custom-notebook-list": JSON.stringify(optionsRef.value),
+	}
+	dataset.saveData(save_data);
+    // localStorage.setItem("siyuan_calender_bar_options", JSON.stringify(optionsRef.value));
 })();
 
 
@@ -85,7 +78,6 @@ if (typeof(Storage) !== "undefined") {
 // );
 
 async function getAllRootNotes(){
-    // 可以通过 window.config.top.notebooks 获取到所有的box id ...不建议 建议直接使用给的api
     const post_data = {}
     const note_info = await ApiFunc.getAllRootNotes(post_data).then((res) =>{
         if(res['data']['notebooks'].length > 0){
@@ -105,14 +97,19 @@ const handleScroll = (e) => {
                 for(var nslot in note_list){
                     if(nslot > optionsRef.value.length){
                         optionsRef.value.push({
-                            label: `${note_list[nslot].sort} - ${note_list[nslot].name}`,
+                            label: note_list[nslot].sort+' - '+note_list[nslot].name,
                             value: note_list[nslot]['if'],
                         });
                     }
                 }
             })();
         console.log('scroll!');
-        localStorage.setItem("siyuan_calender_bar_options", JSON.stringify(optionsRef.value));
+
+		let save_data = {}
+		save_data[window.$baseid] = {
+			"custom-notebook-list": JSON.stringify(optionsRef.value),
+		}
+		dataset.saveData(save_data);
     }
 }
 
@@ -122,7 +119,13 @@ const handleUpdateSelect = (svalue, options) => {
         select_value.value = svalue;
         emit('setRootNoteId', svalue);
         if (svalue != '0'){
-            localStorage.setItem("siyuan_calender_bar_default_selected", svalue);
+
+			let save_data = {}
+			save_data[window.$baseid] = {
+				"custom-current-notebox": svalue,
+			}
+			dataset.saveData(save_data);
+
         }
     }
 
@@ -144,7 +147,12 @@ const changeThemes = (value) => {
         emit('setThemeValue', 'light');
     }
     theme_value.value = value;
-    localStorage.setItem("siyuan_calender_bar_theme_switch", value);
+	let save_data = {}
+	save_data[window.$baseid] = {
+		"custom-theme-value": value?'dark':'light',
+	}
+	dataset.saveData(save_data);
+    // localStorage.setItem("siyuan_calender_bar_theme_switch", value);
 }
 
 const float_menu_x = ref(0)
@@ -182,6 +190,9 @@ const clickOutside = () => {
         <template #header>
             <h3 style="margin:0px; margin-top:-20px">Settings</h3>
         </template>
+        <template #footer>
+            <p style="margin:0px; margin-bottom:-20px; float:right; font-size:10px; color:gray">到底是到底了.</p>
+        </template>
         <n-list-item>
             <n-thing title="" title-extra="选择需要显示的日记">
             <!-- <n-ellipsis style="max-width: 240px"> -->
@@ -192,7 +203,7 @@ const clickOutside = () => {
                 :on-update:value="handleUpdateSelect"
                 v-model:show="show_select_list"
                 @scroll="handleScroll"
-                placeholder="选择对应日记的笔记本"
+                placeholder="选择笔记本"
                 style="max-width: 150px;">
                 <template #arrow>
                     <transition name="slide-left">
@@ -245,73 +256,6 @@ const clickOutside = () => {
     </n-back-top>
 
 <!-- 上面是悬浮的menu，下面是顶部的bar -->
-
-<n-collapse accordion>
-<n-collapse-item title=" Menu" name="1">
-    <template #arrow>
-      <n-icon :size="24">
-        <ArrowOutlineUpRight32Regular />
-      </n-icon>
-    </template>
-
-<n-grid x-gap='12' :cols='3'>
-    <n-gi></n-gi>
-    <n-gi>
-        <n-select
-            v-model:value="select_value"
-            :options="optionsRef"
-            :reset-menu-on-options-change="false"
-            :on-update:value="handleUpdateSelect"
-            v-model:show="show_select_list"
-            @scroll="handleScroll"
-            placeholder="-------选择对应日记的笔记本-------">
-            <template #arrow>
-            <transition name="slide-left">
-                <notebook-lightning-24-regular v-if="show_select_list" />
-                <notebook-24-regular v-else />
-            </transition>
-            </template>
-        </n-select>
-    </n-gi>
-    <n-gi>
-        <n-grid x-gap="12" :cols='2'>
-            <n-gi>
-                <n-button tertiary round :on-click="refreshComps" size="small">
-                    <template #icon>
-                        <n-icon>
-                        <arrow-counterclockwise-12-regular />
-                        </n-icon>
-                    </template>
-                        刷新页面
-                </n-button>    
-            </n-gi>
-            <n-gi>
-                <n-switch
-                    :value='theme_value'
-                    :on-update:value="changeThemes"
-                    size="large">
-                    <template #checked-icon>
-                        <n-icon :component="WeatherMoon16Filled" />
-                    </template>
-                    <template #unchecked-icon>
-                        <n-icon :component="WeatherSunny28Filled" />
-                    </template>
-                    <template #checked>
-                     黑夜
-                    </template>
-                    <template #unchecked>
-                    明亮
-                    </template>
-                </n-switch>         
-            </n-gi>
-        </n-grid>
-    </n-gi>
-</n-grid>
-    <n-divider />
-</n-collapse-item>
-
-</n-collapse>
-
 
 
 </template>

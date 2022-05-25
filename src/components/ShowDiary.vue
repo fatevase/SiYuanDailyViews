@@ -65,14 +65,6 @@ export default {
         }
 
         return ()=> renderAllTemplate()
-        // 如果上式还不行就通过返回值，之后在template中调用。
-        // render 函数中包含这个还待观察。
-        // return {
-        //     is_show,
-        //     note_content,
-        //     note_id,
-        // }
-
     },
     method:{
 
@@ -88,7 +80,35 @@ export default {
 
 }
 function jumpToNote(note_id){
-	window.open('siyuan://blocks/'+note_id)
+	VirtualOpen(note_id)
+	// window.open('siyuan://blocks/'+note_id)
+}
+
+// Thanks leolee9086.
+// https://github.com/leolee9086/cc-baselib/blob/main/components/cc-link-siyuan.vue
+function VirtualOpen(id){
+    if (window!=window.parent){
+		let main_window= window.parent.document
+		let virtual_link =  main_window.createElement("span")
+		virtual_link.setAttribute("data-type","block-ref")
+		virtual_link.setAttribute("data-id",id)
+		let temp = main_window.querySelector(".protyle-wysiwyg div[data-node-id] div[contenteditable]")
+		temp.appendChild(virtual_link)
+		let click_event =  main_window.createEvent('MouseEvents')
+		click_event.initMouseEvent('click', true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+		virtual_link.dispatchEvent(click_event);
+		virtual_link.remove()
+	}else{
+        let main_window=window.document
+        console.log(main_window)
+        let virtual_link = main_window.createElement("a")
+        virtual_link.setAttribute("href",`siyuan://blocks/${id}`)
+        document.body.appendChild(virtual_link)
+        let click_event =  main_window.createEvent('MouseEvents')
+        click_event.initMouseEvent('click', true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+        virtual_link.dispatchEvent(click_event);
+        virtual_link.remove()
+    }
 }
 
 async function checkExistNote(check_data){

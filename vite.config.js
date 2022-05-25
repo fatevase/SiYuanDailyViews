@@ -48,9 +48,22 @@ export default defineConfig({
           secure: false,                                  //是否https接口
         rewrite: (path) => path.replace(/^\/sy_gnconfig/, ''),
       },
+	  '^/sy_gbattrs': {
+          target: 'http://127.0.0.1:6806/api/attr/getBlockAttrs',  //接口域名
+          changeOrigin: true,                             //是否跨域
+          ws: true,                                       //是否代理 websockets
+          secure: false,                                  //是否https接口
+        rewrite: (path) => path.replace(/^\/sy_gbattrs/, ''),
+      },
+	  '^/sy_sbattrs': {
+          target: 'http://127.0.0.1:6806/api/attr/setBlockAttrs',  //接口域名
+          changeOrigin: true,                             //是否跨域
+          ws: true,                                       //是否代理 websockets
+          secure: false,                                  //是否https接口
+        rewrite: (path) => path.replace(/^\/sy_sbattrs/, ''),
+      },
     }
   },
-
 })
 
 
