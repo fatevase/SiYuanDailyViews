@@ -124,7 +124,9 @@ function mergeDict(ori_dict, new_dict){
 	keys = Object.keys(new_dict);
 	for(let i = 0; i < keys.length; i++){
 		// TODO: maybe sub-value was dict and need merge too.
+		new_dict[keys[i]] = new_dict[keys[i]].replace(/&quot;/g, '"');
 		console.log('mergeDict', new_dict[keys[i]])
+
 		if(typeof(new_dict[keys[i]]) == "object"){
 			// dict to string.
 			// " => ' (save " will become quot in attrs')
@@ -142,6 +144,7 @@ async function checkBlockAttrs(id){
 	let attrs = await ApiFunc.getBlockAttrs({'id':id});
 
 	if(Object.keys(attrs.data).length > 0){
+		console.log('checkBlockattrs', attrs)
 		return attrs.data;
 	}
 	return [];

@@ -28,10 +28,14 @@ dataset.queryData(window.$baseid,
 	(data)=>{
 		if(data!=null){
 			console.log("CalenderBar queryData:", data);
-			optionsRef.value = JSON.parse(data['custom-notebook-list']);
+			try{
+				console.log("CalenderBar notebook:", data['custom-notebook-list']);
+				// idk why " => &quot;, so i must replace it when i using parse
+				optionsRef.value = JSON.parse(data['custom-notebook-list']?data['custom-notebook-list'].replace(/&quot;/g, '"'):'[]');
+			}catch(e){
+			}
 			select_value.value = data['custom-current-notebox'];
 			theme_value.value = data['custom-theme-value']=='dark'?true:false;
-			console.log("optionsREf:", data['custom-notebook-list'], 'last', JSON.parse(data['custom-notebook-list']))
 			emit('setRootNoteId', select_value.value==null?0:select_value.value);
 		}
 	}
@@ -54,11 +58,11 @@ dataset.queryData(window.$baseid,
         );
     }
 	let save_data = {}
+	console.log("init async", JSON.stringify(optionsRef.value));
 	save_data[window.$baseid] = {
 		"custom-notebook-list": JSON.stringify(optionsRef.value),
 	}
 	dataset.saveData(save_data);
-    // localStorage.setItem("siyuan_calender_bar_options", JSON.stringify(optionsRef.value));
 })();
 
 
