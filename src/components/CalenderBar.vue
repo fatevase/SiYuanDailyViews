@@ -31,6 +31,7 @@ dataset.queryData(window.$baseid,
 			optionsRef.value = JSON.parse(data['custom-notebook-list']);
 			select_value.value = data['custom-current-notebox'];
 			theme_value.value = data['custom-theme-value']=='dark'?true:false;
+			console.log("optionsREf:", data['custom-notebook-list'], 'last', JSON.parse(data['custom-notebook-list']))
 			emit('setRootNoteId', select_value.value==null?0:select_value.value);
 		}
 	}
@@ -128,8 +129,37 @@ const handleUpdateSelect = (svalue, options) => {
 
         }
     }
+}
+
+const handelShowSelect = (value) => {
+	console.log(value)
+	show_select_list.value = value;
+	if(value) {
+		(async () => {
+		const note_list = await getAllRootNotes();
+		if (note_list.length > 0){
+			optionsRef.value = [];
+			// 清空之前的数据 刷新notebook box list
+		}
+
+		for(var nslot in note_list){
+			optionsRef.value.push(
+				{
+					label: `${note_list[nslot].sort} - ${note_list[nslot].name}`,
+					value: note_list[nslot]['id'],
+				}
+			);
+		}
+		let save_data = {}
+		save_data[window.$baseid] = {
+			"custom-notebook-list": JSON.stringify(optionsRef.value),
+		}
+		dataset.saveData(save_data);
+		})();
+	}
 
 }
+
 
 const refreshComps = () => {
 	let mode = '0';
@@ -201,6 +231,7 @@ const clickOutside = () => {
                 :options="optionsRef"
                 :reset-menu-on-options-change="false"
                 :on-update:value="handleUpdateSelect"
+				:on-update:show="handelShowSelect"
                 v-model:show="show_select_list"
                 @scroll="handleScroll"
                 placeholder="选择笔记本"

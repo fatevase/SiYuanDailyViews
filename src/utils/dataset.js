@@ -14,13 +14,17 @@ export default dataset;
 // data must be dictionary
 
 async function saveData(data, options=null) {
+	console.log('saveData', data);
 	let save_path = Object.keys(data);
 	for (let i = 0; i < save_path.length; i++){
 		let ori_data = data[save_path[i]];
 		let block_attrs = await checkBlockAttrs(save_path[i]);
-		console.log("block attrs",block_attrs)
+		console.log("block attrs", block_attrs)
 		if(Object.keys(block_attrs).length > 0){
-			let save_data = mergeDict(block_attrs, ori_data);
+			// save without merge i think
+			// let save_data = mergeDict(block_attrs, ori_data);
+			let save_data = ori_data;
+			console.log("save merge data", save_data)
 			save2BlockAttrs({id: save_path[i], attrs: save_data});
 		}else{
 			save2LocalStorage(save_path[i], data[save_path[i]]);
@@ -32,33 +36,29 @@ async function queryData(path, names){
 	// first try get from block attrs
 	let attrs = await checkBlockAttrs(path);
 	let result = {};
-
-	if(attrs.length > 0){
+	console.log("query Path", path)
+	console.log('queryData', attrs);
+	if(Object.keys(attrs).length > 0){
 		if(typeof(names) == "string"){
 			if(attrs[names] != null){
-				// if(isJson(attrs[names])){
-				// 	attrs[names] = JSON.parse(attrs[names]);
-				// }
 				return attrs[names];
 			}
 		}else{
 			// was a list for query
 			for(let i = 0; i < names.length; i++){
 				if(attrs[names[i]] != null){
-					// if(isJson(attrs[names[i]])){
-					// 	attrs[names[i]] = JSON.parse(attrs[names[i]]);
-					// }
 					result[names[i]] = attrs[names[i]];
 				}
 			}
-			return result;
 		}
+		return result;
 	}
 	// then try get from localStorage
-	if (typeof(Storage) !== "undefined") {
+	if (typeof(Storage) != "undefined") {
 		let local_storage = localStorage.getItem(path);
 		if(local_storage != null){
 			try {
+				console.log('query local storage', local_storage)
 				let json_local_data = JSON.parse(local_storage);
 				if(json_local_data != null){
 					if(typeof(names) == "string"){
@@ -79,8 +79,9 @@ async function queryData(path, names){
 				return null;
 			}
 		}
-		return null;
 	}
+	return null;
+
 }
 
 function save2LocalStorage(path, data){
@@ -123,6 +124,7 @@ function mergeDict(ori_dict, new_dict){
 	keys = Object.keys(new_dict);
 	for(let i = 0; i < keys.length; i++){
 		// TODO: maybe sub-value was dict and need merge too.
+		console.log('mergeDict', new_dict[keys[i]])
 		if(typeof(new_dict[keys[i]]) == "object"){
 			// dict to string.
 			// " => ' (save " will become quot in attrs')
