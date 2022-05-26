@@ -1,3 +1,3 @@
 # SiYuanDailyView
 For Dev.
-v0.05
+v0.07

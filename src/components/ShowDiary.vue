@@ -1,7 +1,7 @@
 <script>
 import { h, ref, inject } from "vue"
 import{ useMessage} from "naive-ui"
-import {NTag, NPopover} from 'naive-ui'
+import {NTag, NPopover, NEllipsis} from 'naive-ui'
 import ApiFunc from '../utils/request.js'
 import randTools from '../utils/randomTools.js'
 
@@ -58,7 +58,7 @@ export default {
 
 								onClick:()=>jumpToNote(note_id.value),
 							}, {default:()=>[
-								note_title.value
+								h(NEllipsis, {style:"max-width:100px;", tooltip:false}, {default:()=>[note_title.value ]})
 							]}),
 					default:()=>[
 						(note_tags.value.length>0)&&
@@ -270,5 +270,6 @@ function getSyLabel(content){
 }
 .tag-full{
     width: 100%;
+	font-size: 14px;
 }
 </style>
