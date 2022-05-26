@@ -1,9 +1,10 @@
 <script>
 import { h, ref, inject } from "vue"
 import{ useMessage} from "naive-ui"
-import {NTag, NPopover, NEllipsis} from 'naive-ui'
-import ApiFunc from '../utils/request.js'
-import randTools from '../utils/randomTools.js'
+import {NTag, NPopover, NEllipsis, NTimeline, NTimelineItem} from 'naive-ui'
+import ApiFunc from '../utils/request.js';
+import randTools from '../utils/randomTools.js';
+import dateTools from '../utils/dateTools.js';
 
 // TODO: 增加笔记检索缓存
 // TODO: 增加标签
@@ -25,15 +26,17 @@ export default {
     },
     setup(props) {
         window.$message = useMessage() // 全局消息提示 for request.js
-
+		console.log('test->search_someDiary:')
         // 需要用这种方式来获取axios的值
         // 动态加载数据，先载入ref，之后promise结束后更新值
         const note_exist = ref(false);
         const note_id = ref('0');
         const note_title = ref('null');
         const note_tags = ref([]);
-        const random_color = ref('#000000');
+        const rcolor_subtitle = ref('#000000');
+		const rcolor_tag = ref('#000000');
 		const note_subtitle = ref([]);
+		const note_event = ref(false);
         (async () => {
             const check_result = await checkExistNote(props.show_note_index);
             note_exist.value = check_result["exist"];
@@ -41,7 +44,10 @@ export default {
             note_id.value = check_result["id"];
             note_tags.value = check_result["tags"];
 			note_subtitle.value = check_result["subtitile"];
-            random_color.value = randTools.randomColor(note_tags.value);
+			note_event.value = check_result["event"];
+            rcolor_tag.value = randTools.randomColor(note_tags.value);
+			rcolor_subtitle.value = randTools.randomColor(note_subtitle.value);
+			
         })();
 
         function renderAllTemplate(){
@@ -49,10 +55,11 @@ export default {
                 'ul',{class:"tag-ul"},{default:()=>[
 				h(NPopover,{
 						width: 'trigger',
-						trigger: "hover"
+						trigger: "hover",
+						class: "tag-full",
 					},
 					{trigger:()=>h(NTag, {
-								type: note_tags.value.length>0?"success":"info",
+								type: note_event.value?"error":note_tags.value.length>0?"success":"info",
 								size:"large",
 								class:"tag-full",
 
@@ -63,10 +70,9 @@ export default {
 					default:()=>[
 						(note_tags.value.length>0)&&
 							note_tags.value.map(item=>h(NTag,{
-								round:true,
 								size:'small',
-								color:{'color':random_color.value,
-										'borderColor': randTools.colorReverse(random_color.value)},
+								color:{'color':rcolor_tag.value,
+										'borderColor': randTools.colorReverse(rcolor_tag.value)},
 						},{default:()=>[item]})),
 						(note_tags.value.length==0)&&h('p',{},{default:()=>["空空如也..."]})
 					]}
@@ -76,8 +82,8 @@ export default {
                 note_subtitle.value.map(item=>h(NTag,{
                     round:true,
                     size:'small',
-                    color:{'color':random_color.value,
-                            'borderColor': randTools.colorReverse(random_color.value)},
+                    color:{'color':rcolor_subtitle.value,
+                            'borderColor': randTools.colorReverse(rcolor_subtitle.value)},
                 },{default:()=>[item]}))
                 ]}
             )
@@ -178,16 +184,18 @@ async function checkExistNote(check_data){
 	let search_tag = "SELECT tag as content, "+
 				"CASE WHEN subtype IS '' THEN 'tag' ELSE subtype END AS type, "+
 				"id FROM blocks WHERE tag!='' "+
-				"AND root_id IN ("+search_daily_id+")"+
+				"AND root_id IN ("+search_daily_id+") "+
 				"LIMIT 5"
 
 	let search_h1 = "SELECT content as content, subtype as type, id FROM blocks WHERE "+
-					"subtype='h1'"+
-						"AND root_id IN ("+search_daily_id+")"+
-						"LIMIT 1"
+					"content!='' "+
+					"AND subtype='h1' "+
+					"AND root_id IN ("+search_daily_id+") "+
+					"LIMIT 1"
 	let search_h2 = "SELECT content as content, subtype as type, id FROM blocks WHERE "+
-				"subtype='h2'"+
-					"AND root_id IN ("+search_daily_id+")"+
+					"content!='' "+
+					"AND subtype='h2' "+
+					"AND root_id IN ("+search_daily_id+") "+
 					"LIMIT 3"
 
 	concat_sql = "SELECT * FROM ("+search_title+
@@ -231,9 +239,37 @@ async function checkExistNote(check_data){
 			"subtitile": note_subtitle,
 		}
 	})
+	let diary_event = false;
+	if(box_id!='0' && note_info['show_title'].replace(/[^0-9]/g, '')!=y+m+d && note_info['show_title']!=''){
+		diary_event = await searchSameDiary(y+'-'+m+'-'+d, note_info['show_title'], box_id);
+		console.log("try got event,", diary_event);
+	}
+	note_info['event'] = diary_event;
     return note_info;
 
 }
+
+async function searchSameDiary(search_time, search_title, box_id){
+	let result = false
+	let yesterday = dateTools.getAroundDate(search_time, -1, '_');
+	let tomorrow = dateTools.getAroundDate(search_time, 1, '_');
+	let sql_same = "SELECT id FROM blocks WHERE subtype='h1' "+
+					"AND content='"+search_title+"' "+
+					"AND root_id IN ("+
+					"SELECT id FROM blocks WHERE "+
+					"(ial LIKE '%title=_"+yesterday+"_%' "+
+					"OR ial LIKE '%title=_"+tomorrow+"_%') "+
+					"AND box = '"+box_id+"' "+
+					"LIMIT 2)"
+	result = await ApiFunc.getNoteByTitle({"stmt": sql_same}).then((res) =>{
+ 		if(res['data'].length > 0){
+			 return true;
+		 }
+		 return false;
+	})
+	return result;
+}
+
 
 function getSyLabel(content){
     if(content == null) return "";
@@ -264,12 +300,14 @@ function getSyLabel(content){
     /*justify-content: flex-start;
     align-items: center; */
     flex-wrap: wrap;
-    margin: 0;
-    padding: 0;
+	width: 100%;
+    margin: 0px;
+    padding: 0px;
     min-width: 80px;
 }
 .tag-full{
     width: 100%;
+	margin: 0px;
 	font-size: 14px;
 }
 </style>

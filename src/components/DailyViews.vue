@@ -90,7 +90,15 @@ provide("reload", reload);
 
 </script>
 
+
 <template>
+
+
+  <div style="overflow: auto">
+	
+  </div>
+
+
 
     <calender-bar @setRootNoteId="checkRootNoteId" @setThemeValue="checkThemeValue"/>
     <n-calendar
@@ -102,19 +110,24 @@ provide("reload", reload);
         @update:value="handleUpdateValue">
         <!-- 这里我提供了两种方式解决 v-for 循环生成组件后续传值的问题，其一是通过不同的key 传值，这样由于载入不同的key就可以获取不同的组件从而强制加载，
             其二是 通过 reload函数， 通过v-if 判断然后刷新组件，子组件通过watch 传入的root_note_id 是否发生改变而刷新组件。-->
-        <show-diary class="diary-layout" :show_note_index="organSearch([year, month, date, root_note_id])" :key="'-'+year+'-'+month+'-'+date" v-if="isRouterAlive"> </show-diary>
-    </n-calendar>
+        <show-diary 
+			class="diary-layout" 
+			:show_note_index="organSearch([year, month, date, root_note_id])" 
+			:key="'-'+year+'-'+month+'-'+date" v-if="isRouterAlive"> </show-diary>
+	</n-calendar>
 </template>
 
 <style scoped>
 .diary-layout {
-
+	
 }
 a {
   color: #42b983;
 }
 .calender-layout {
+
     padding-bottom: 2em;
+	
 }
 .main-layout {
     min-width: 750px;

@@ -1,7 +1,9 @@
+import { isYesterday, addDays, isTomorrow } from 'date-fns'
 let dateTools = {}
 
 dateTools.getNowDate = getNowDate;
 dateTools.formatDate = formatDate;
+dateTools.getAroundDate = getAroundDate;
 
 export default dateTools;
 
@@ -28,7 +30,7 @@ function getNowDate(connect_str='-'){
     return result;
 }
 
-function formatDate(year, month, day, hour=-1, minute=-1, second=-1, connect_str='-'){
+function formatDate(year, month, day, connect_str='-', hour=-1, minute=-1, second=-1){
     if(month<10){
         month = "0"+month;
     }
@@ -37,7 +39,7 @@ function formatDate(year, month, day, hour=-1, minute=-1, second=-1, connect_str
     }
     let _specific_time = ""
 
-    if(hour > 0){
+    if(second > 0){
         if(hour<10){
             hour = "0"+hour;
         }
@@ -50,4 +52,13 @@ function formatDate(year, month, day, hour=-1, minute=-1, second=-1, connect_str
         _specific_time =' '+hour+":"+minute+":"+second;
     }
     return year+connect_str+month+connect_str+day + _specific_time;
+}
+
+function getAroundDate(_date, gap, connect_str='-'){
+
+	if(typeof(_date) == "string"){
+		_date = new Date(_date);
+	}
+	let new_date = addDays(_date.getTime(), gap);
+	return formatDate(new_date.getFullYear(), new_date.getMonth()+1, new_date.getDate(), connect_str=connect_str);
 }

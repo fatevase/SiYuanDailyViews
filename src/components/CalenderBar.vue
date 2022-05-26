@@ -276,27 +276,6 @@ const clickOutside = () => {
         </n-list-item>
         <n-list-item>
             <n-space justify="center">
-            <n-switch
-                :value='theme_value'
-                :on-update:value="changeThemes"
-                size="large">
-                <template #checked-icon>
-                    <n-icon :component="WeatherMoon16Filled" />
-                </template>
-                <template #unchecked-icon>
-                    <n-icon :component="WeatherSunny28Filled" />
-                </template>
-                <template #checked>
-                    黑夜
-                </template>
-                <template #unchecked>
-                明亮
-                </template>
-            </n-switch>
-            </n-space>
-        </n-list-item>
-        <n-list-item>
-            <n-space justify="center">
             <n-button tertiary round :on-click="refreshComps" size="small">
                 <template #icon>
                     <n-icon>
