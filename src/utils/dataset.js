@@ -19,12 +19,11 @@ async function saveData(data, options=null) {
 	for (let i = 0; i < save_path.length; i++){
 		let ori_data = data[save_path[i]];
 		let block_attrs = await checkBlockAttrs(save_path[i]);
-		console.log("block attrs", block_attrs)
+
 		if(Object.keys(block_attrs).length > 0){
 			// save without merge i think
 			// let save_data = mergeDict(block_attrs, ori_data);
 			let save_data = ori_data;
-			console.log("save merge data", save_data)
 			save2BlockAttrs({id: save_path[i], attrs: save_data});
 		}else{
 			save2LocalStorage(save_path[i], data[save_path[i]]);

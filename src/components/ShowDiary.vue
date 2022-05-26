@@ -1,7 +1,7 @@
 <script>
 import { h, ref, inject } from "vue"
 import{ useMessage} from "naive-ui"
-import {NTag} from 'naive-ui'
+import {NTag, NPopover} from 'naive-ui'
 import ApiFunc from '../utils/request.js'
 import randTools from '../utils/randomTools.js'
 
@@ -30,31 +30,50 @@ export default {
         // 动态加载数据，先载入ref，之后promise结束后更新值
         const note_exist = ref(false);
         const note_id = ref('0');
-        const note_content = ref('null');
+        const note_title = ref('null');
         const note_tags = ref([]);
         const random_color = ref('#000000');
+		const note_subtitle = ref([]);
         (async () => {
             const check_result = await checkExistNote(props.show_note_index);
-            note_exist.value = check_result['note_exist'];
-            note_content.value = check_result['show_data'];
-            note_id.value = check_result['note_id'];
-            note_tags.value = check_result['note_tags'];
+            note_exist.value = check_result["exist"];
+            note_title.value = check_result['show_title'];
+            note_id.value = check_result["id"];
+            note_tags.value = check_result["tags"];
+			note_subtitle.value = check_result["subtitile"];
             random_color.value = randTools.randomColor(note_tags.value);
         })();
 
         function renderAllTemplate(){
             return note_exist.value && h(
                 'ul',{class:"tag-ul"},{default:()=>[
-                h(NTag,
-                    {
-                        type:'info',
-                        size:"large",
-                        class:"tag-full",
-                        onClick:()=>jumpToNote(note_id.value)},
-                    {default:()=>[note_content.value]}
-                ),
-                (note_tags.value.length>0)&&
-                note_tags.value.map(item=>h(NTag,{
+				h(NPopover,{
+						width: 'trigger',
+						trigger: "hover"
+					},
+					{trigger:()=>h(NTag, {
+								type: note_tags.value.length>0?"success":"info",
+								size:"large",
+								class:"tag-full",
+
+								onClick:()=>jumpToNote(note_id.value),
+							}, {default:()=>[
+								note_title.value
+							]}),
+					default:()=>[
+						(note_tags.value.length>0)&&
+							note_tags.value.map(item=>h(NTag,{
+								round:true,
+								size:'small',
+								color:{'color':random_color.value,
+										'borderColor': randTools.colorReverse(random_color.value)},
+						},{default:()=>[item]})),
+						(note_tags.value.length==0)&&h('p',{},{default:()=>["空空如也..."]})
+					]}
+
+				),
+                (note_subtitle.value.length>0)&&
+                note_subtitle.value.map(item=>h(NTag,{
                     round:true,
                     size:'small',
                     color:{'color':random_color.value,
@@ -117,54 +136,101 @@ async function checkExistNote(check_data){
     const d = check_data['day']>9?check_data['day']:'0'+check_data['day'];
     const box_id = check_data['root_note_id'];
     // for sql. match any character
-    let date_str = y+'_'+m+'_'+d; 
-    const select_note_sql = {
-        "stmt": ""
-    }
+    let date_str = y+'_'+m+'_'+d;
+
+	let search_daily_id = "";
+	let search_title = "";
+	let concat_sql = ""
+
     // only for one labels
     // sql https://stackoverflow.com/questions/1415328/combining-union-and-limit-operations-in-mysql-query
     // support 3 labels
     if(box_id != '0'){
-        select_note_sql['stmt'] = "SELECT * FROM (SELECT tag, content, id FROM blocks "+
-									"WHERE ial LIKE '%title=\""+date_str+"\"%' "+
-									"AND parent_id = '' AND content !='' AND box='"+box_id+"' GROUP BY content LIMIT 1) "+
-									"UNION SELECT * FROM (SELECT tag, content, id FROM blocks "+
-									"WHERE parent_id IN (SELECT id FROM blocks "+
-									"WHERE ial LIKE '%title=\""+date_str+"\"%' AND "+
-									"parent_id = '' AND box='"+box_id+"' LIMIT 1) AND tag !='' GROUP BY tag LIMIT 3)";
+		search_daily_id = "SELECT id FROM blocks WHERE "+
+							  "ial LIKE '%title=_"+date_str+"_%' "+
+							  "AND parent_id = '' "+
+							  "AND box='"+box_id+"' LIMIT 1"
+		
+		search_title = "SELECT content as content,"+
+						   "CASE WHEN subtype IS '' THEN 'title' ELSE subtype END AS type , "+
+						   "id FROM blocks WHERE parent_id='' "+
+						   "AND ial LIKE '%title=_"+date_str+"_%' "+
+						   "AND content!='' "+
+						   "AND box='"+box_id+"' GROUP BY content LIMIT 1"
+
+
     }else{
-        select_note_sql['stmt'] = "SELECT * FROM (SELECT tag, content, id FROM blocks "+
-									"WHERE ial LIKE '%title=\""+date_str+"\"%' "+
-									"AND parent_id = '' AND content !='' GROUP BY content LIMIT 1) "+
-									"UNION SELECT * FROM (SELECT tag, content, id FROM blocks "+
-									"WHERE parent_id IN (SELECT id FROM blocks "+
-									"WHERE ial LIKE '%title=\""+date_str+"\"%' AND "+
-									"parent_id = '' LIMIT 1) AND tag !='' GROUP BY tag LIMIT 3)";
+		search_daily_id = "SELECT id FROM blocks WHERE "+
+							  "ial LIKE '%title=_"+date_str+"_%' "+
+							  "AND parent_id = '' "+
+							  "LIMIT 1"
+		
+		
+		search_title = "SELECT content as content,"+
+						   "CASE WHEN subtype IS '' THEN 'title' ELSE subtype END AS type , "+
+						   "id FROM blocks WHERE parent_id='' "+
+						   "AND ial LIKE '%title=_"+date_str+"_%' "+
+						   "AND content!='' "+
+						   "GROUP BY content LIMIT 1"
+
     }
-  
-    const note_info = await ApiFunc.getNoteByTitle(select_note_sql).then((res) =>{
+
+	let search_tag = "SELECT tag as content, "+
+				"CASE WHEN subtype IS '' THEN 'tag' ELSE subtype END AS type, "+
+				"id FROM blocks WHERE tag!='' "+
+				"AND root_id IN ("+search_daily_id+")"+
+				"LIMIT 5"
+
+	let search_h1 = "SELECT content as content, subtype as type, id FROM blocks WHERE "+
+					"subtype='h1'"+
+						"AND root_id IN ("+search_daily_id+")"+
+						"LIMIT 1"
+	let search_h2 = "SELECT content as content, subtype as type, id FROM blocks WHERE "+
+				"subtype='h2'"+
+					"AND root_id IN ("+search_daily_id+")"+
+					"LIMIT 3"
+
+	concat_sql = "SELECT * FROM ("+search_title+
+					") UNION SELECT * FROM ("+search_h1+
+					") UNION SELECT * FROM ("+search_h2+
+					") UNION SELECT * FROM ("+search_tag+
+					")"
+
+
+    const note_info = await ApiFunc.getNoteByTitle({"stmt": concat_sql}).then((res) =>{
         let note_exist = false;
-        let show_data = '';
+        let show_title = '';
         let note_id = 0;
         let note_tags = [];
+		let note_subtitle=[];
+		let temp_title = "";
         if(res['data'].length > 0){
             for(var i in res['data']){
-				if(res['data'][i]['tag'] != ''){
-					let label = getSyLabel(res['data'][i]['tag']);
-                    if(label.length>0){
-                        note_tags.push(label);
-                    }
-				}else{
-                        note_exist = true;
-                        show_data = res['data'][i]['content'];
-                        note_id = res['data'][i]['id'];
-                    }
-            }
-        }
-        const result = {'note_exist':note_exist, 'show_data':show_data,
-                        'note_id':note_id, 'note_tags':note_tags};
-        return result;
-    })
+				let _data = res['data'][i];
+				if(_data['type'] == 'title'){
+					temp_title = _data['content'];
+					note_id = _data['id'];
+				}else if(_data['type'] == 'tag'){
+					note_tags.push(getSyLabel(_data['content']));
+				}else if(_data['type'] == 'h1'){
+					show_title = _data['content'];
+				}else if(_data['type'] == 'h2'){
+					note_subtitle.push(_data['content']);
+				}
+			}
+			note_exist = true;
+		}
+		if(show_title == ''){
+			show_title = temp_title;
+		}
+		return {
+			"exist": note_exist,
+			"show_title": show_title,
+			"id": note_id,
+			"tags": note_tags,
+			"subtitile": note_subtitle,
+		}
+	})
     return note_info;
 
 }
@@ -187,7 +253,7 @@ function getSyLabel(content){
 
 <template>
     <!-- <n-tag v-if="is_show">
-        <a href="siyuan://blocks/{{note_id}}">{{note_content}}</a>
+        <a href="siyuan://blocks/{{note_id}}">{{note_title}}</a>
     </n-tag> -->
 </template>
 

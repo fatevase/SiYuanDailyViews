@@ -24,14 +24,14 @@ const theme_value = ref(true);
 
 
 dataset.queryData(window.$baseid, 
- ['custom-notebook-list', 'custom-current-notebox', 'custom-theme-value']).then(
+ ['custom-notebox-list', 'custom-current-notebox', 'custom-theme-value']).then(
 	(data)=>{
 		if(data!=null){
 			console.log("CalenderBar queryData:", data);
 			try{
-				console.log("CalenderBar notebook:", data['custom-notebook-list']);
+				console.log("CalenderBar notebook:", data['custom-notebox-list']);
 				// idk why " => &quot;, so i must replace it when i using parse
-				optionsRef.value = JSON.parse(data['custom-notebook-list']?data['custom-notebook-list'].replace(/&quot;/g, '"'):'[]');
+				optionsRef.value = JSON.parse(data['custom-notebox-list']?data['custom-notebox-list'].replace(/&quot;/g, '"'):'[]');
 			}catch(e){
 			}
 			select_value.value = data['custom-current-notebox'];
@@ -60,7 +60,7 @@ dataset.queryData(window.$baseid,
 	let save_data = {}
 	console.log("init async", JSON.stringify(optionsRef.value));
 	save_data[window.$baseid] = {
-		"custom-notebook-list": JSON.stringify(optionsRef.value),
+		"custom-notebox-list": JSON.stringify(optionsRef.value),
 	}
 	dataset.saveData(save_data);
 })();
@@ -81,6 +81,30 @@ dataset.queryData(window.$baseid,
 //     },
 //     { immediate: true, deep: true }
 // );
+
+async function asyncOptions(){
+	const note_list = await getAllRootNotes();
+    if (note_list.length > 0){
+        optionsRef.value = [];
+        // 清空之前的数据 刷新notebook box list
+    }
+
+    for(var nslot in note_list){
+        // console.log('got box note: ' + note_list[nslot].id + ' ' + note_list[nslot].name + ' ' + note_list[nslot].sort);
+        optionsRef.value.push(
+            {
+                label: `${note_list[nslot].sort} - ${note_list[nslot].name}`,
+                value: note_list[nslot]['id'],
+            }
+        );
+    }
+	let save_data = {}
+	console.log("init async", JSON.stringify(optionsRef.value));
+	save_data[window.$baseid] = {
+		"custom-notebox-list": JSON.stringify(optionsRef.value),
+	}
+	dataset.saveData(save_data);
+}
 
 async function getAllRootNotes(){
     const post_data = {}
@@ -112,7 +136,7 @@ const handleScroll = (e) => {
 
 		let save_data = {}
 		save_data[window.$baseid] = {
-			"custom-notebook-list": JSON.stringify(optionsRef.value),
+			"custom-notebox-list": JSON.stringify(optionsRef.value),
 		}
 		dataset.saveData(save_data);
     }
@@ -156,7 +180,7 @@ const handelShowSelect = (value) => {
 		}
 		let save_data = {}
 		save_data[window.$baseid] = {
-			"custom-notebook-list": JSON.stringify(optionsRef.value),
+			"custom-notebox-list": JSON.stringify(optionsRef.value),
 		}
 		dataset.saveData(save_data);
 		})();

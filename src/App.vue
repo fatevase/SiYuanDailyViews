@@ -11,8 +11,6 @@ const app_theme = ref(lightTheme);
 
 Init();
 
-adjustTheme();
-
 
 function checkThemeValue(value){
     if (value == 'dark' || value == '1') {
@@ -77,6 +75,7 @@ function Init(){
 	}
 	console.log("got widget id.",id);
 	window.$baseid = id
+	adjustTheme();
 }
 </script>
 
@@ -85,11 +84,11 @@ function Init(){
     :theme="app_theme"
     :theme-overrides="overridesTheme()">
     <!-- <n-theme-editor> -->
-    <n-scrollbar style="max-height: 780px" x-scrollabl>
+    <!--<n-scrollbar style="max-height: 780px" x-scrollabl>-->
       <n-message-provider >
         <daily-views @setThemeValue="checkThemeValue" />
       </n-message-provider>
-    </n-scrollbar>
+    <!--</n-scrollbar>-->
     <!-- 处理响应式的组件 -->
     <n-global-style />
     <!-- </n-theme-editor> -->
