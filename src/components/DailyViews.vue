@@ -119,7 +119,10 @@ provide("reload", reload);
 
 <style scoped>
 .diary-layout {
-	
+	min-width:100px;
+	width:100%;
+	padding:0px;
+	margin:0px;
 }
 a {
   color: #42b983;
@@ -130,7 +133,7 @@ a {
 	
 }
 .main-layout {
-    min-width: 750px;
+    min-width: 780px;
     max-height: calc(100vh - 100px);
 }
 

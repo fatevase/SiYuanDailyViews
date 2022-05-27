@@ -1,13 +1,18 @@
 <script>
 import { h, ref, inject } from "vue"
 import{ useMessage} from "naive-ui"
-import {NTag, NPopover, NEllipsis, NTimeline, NTimelineItem} from 'naive-ui'
+import {NTag, NPopover, NEllipsis, NThing, NSpace, NIcon} from 'naive-ui';
+import {AirplaneTakeOff24Regular, Airplane20Filled} from '@vicons/fluent';
+import {AirplaneTicketOutlined} from '@vicons/material';
+
 import ApiFunc from '../utils/request.js';
 import randTools from '../utils/randomTools.js';
 import dateTools from '../utils/dateTools.js';
 
-// TODO: 增加笔记检索缓存
-// TODO: 增加标签
+// TODO: 增加笔记检索缓存(暂时不做)
+// TODO: 添加心情图标
+// TODO: 丰富弹出框内容
+// TODO: 优化日记事件显示
 
 export default {
     components:{NTag},
@@ -36,7 +41,7 @@ export default {
         const rcolor_subtitle = ref('#000000');
 		const rcolor_tag = ref('#000000');
 		const note_subtitle = ref([]);
-		const note_event = ref(false);
+		const note_event = ref(-1);
         (async () => {
             const check_result = await checkExistNote(props.show_note_index);
             note_exist.value = check_result["exist"];
@@ -45,47 +50,57 @@ export default {
             note_tags.value = check_result["tags"];
 			note_subtitle.value = check_result["subtitile"];
 			note_event.value = check_result["event"];
-            rcolor_tag.value = randTools.randomColor(note_tags.value);
-			rcolor_subtitle.value = randTools.randomColor(note_subtitle.value);
+            rcolor_tag.value = randTools.randomColor("tags"+note_title.value);
+			rcolor_subtitle.value = randTools.randomColor(note_title.value+"stitles");
 			
         })();
 
         function renderAllTemplate(){
-            return note_exist.value && h(
-                'ul',{class:"tag-ul"},{default:()=>[
-				h(NPopover,{
-						width: 'trigger',
-						trigger: "hover",
-						class: "tag-full",
-					},
-					{trigger:()=>h(NTag, {
-								type: note_event.value?"error":note_tags.value.length>0?"success":"info",
-								size:"large",
-								class:"tag-full",
+            return note_exist.value && h(NSpace,{vertical:true,class:"tag-ul"},()=>[
+					// h(NSpace,{wrap:false, justify:"space-around", class:"space-full"},()=>[
+						h(NPopover,{width: 'trigger', trigger: "hover", class: "tag-full"},
+							{
+							// trigger show content
+							trigger:()=>h(NTag, {
+										type: note_event.value>-1?"error":note_tags.value.length>0?"primary":"info",
+										size:"large", class:"tag-full",
+										onClick:()=>jumpToNote(note_id.value),
+									}, 
+										()=>h(NSpace,{wrap:false, justify:"end"},()=>[
+											note_event.value!=0&&h(NEllipsis,{tooltip:false,style:"max-width: 90px;padding-top:4px;"},()=>[note_title.value,]),
+											note_event.value==0&&h(NIcon, {size:"20"},()=>h(Airplane20Filled,{})),
+											note_event.value==1&&h(NIcon, {size:"20"},()=>h(AirplaneTicketOutlined,{})),
+											note_event.value==2&&h(NIcon, {size:"20"},()=>h(AirplaneTakeOff24Regular,{})), 
+										])
+									),
+							
+							// pop content
+							default:()=>[
+								h(NThing,{},
+									{header:()=>[note_title.value],
+									description:()=>(note_tags.value.length>0)&&
+															note_tags.value.map(item=>h(NTag,{
+																size:'small',
+																color:{'color':rcolor_tag.value, 'borderColor': randTools.colorReverse(rcolor_tag.value)},
+															},()=>[item])),
+									footer:()=>[(note_tags.value.length==0)&&h(NSpace,{style:"float:right;"},()=>["空空如也..."])],
+									default:()=>[]}),
+								
+							]}
+						),
 
-								onClick:()=>jumpToNote(note_id.value),
-							}, {default:()=>[
-								h(NEllipsis, {style:"max-width:100px;", tooltip:false}, {default:()=>[note_title.value ]})
-							]}),
-					default:()=>[
-						(note_tags.value.length>0)&&
-							note_tags.value.map(item=>h(NTag,{
-								size:'small',
-								color:{'color':rcolor_tag.value,
-										'borderColor': randTools.colorReverse(rcolor_tag.value)},
-						},{default:()=>[item]})),
-						(note_tags.value.length==0)&&h('p',{},{default:()=>["空空如也..."]})
-					]}
-
-				),
-                (note_subtitle.value.length>0)&&
-                note_subtitle.value.map(item=>h(NTag,{
-                    round:true,
-                    size:'small',
-                    color:{'color':rcolor_subtitle.value,
-                            'borderColor': randTools.colorReverse(rcolor_subtitle.value)},
-                },{default:()=>[item]}))
-                ]}
+					// ]),
+					
+					h(NSpace, {wrap:true}, ()=>[
+						(note_subtitle.value.length>0)&&note_subtitle.value.map(item=>h(NTag,{
+							round:true,
+							size:'small',
+							// style:"font-size:12px;",
+							color:{'color':rcolor_subtitle.value,
+									'borderColor': randTools.colorReverse(rcolor_subtitle.value)},
+						},()=>[item]))
+					])
+                ]
             )
         }
 
@@ -239,10 +254,9 @@ async function checkExistNote(check_data){
 			"subtitile": note_subtitle,
 		}
 	})
-	let diary_event = false;
+	let diary_event = -1;
 	if(box_id!='0' && note_info['show_title'].replace(/[^0-9]/g, '')!=y+m+d && note_info['show_title']!=''){
 		diary_event = await searchSameDiary(y+'-'+m+'-'+d, note_info['show_title'], box_id);
-		console.log("try got event,", diary_event);
 	}
 	note_info['event'] = diary_event;
     return note_info;
@@ -250,10 +264,15 @@ async function checkExistNote(check_data){
 }
 
 async function searchSameDiary(search_time, search_title, box_id){
-	let result = false
+	// 这里判断搜索结果为开始事件还是结束时间 当搜索到结果为1时
+	// 通过获取到parent_id的所有数字中的前8个数字与当前日期比大小，
+	// 如果大，那么当前就是结束，否则就是开始
+	// 应该可行 -.-
+	// return 0-> continue, 1->start, 2->end, -1->not
+	let result = -1
 	let yesterday = dateTools.getAroundDate(search_time, -1, '_');
 	let tomorrow = dateTools.getAroundDate(search_time, 1, '_');
-	let sql_same = "SELECT id FROM blocks WHERE subtype='h1' "+
+	let sql_same = "SELECT parent_id FROM blocks WHERE subtype='h1' "+
 					"AND content='"+search_title+"' "+
 					"AND root_id IN ("+
 					"SELECT id FROM blocks WHERE "+
@@ -263,9 +282,21 @@ async function searchSameDiary(search_time, search_title, box_id){
 					"LIMIT 2)"
 	result = await ApiFunc.getNoteByTitle({"stmt": sql_same}).then((res) =>{
  		if(res['data'].length > 0){
-			 return true;
+			 if(res['data'].length > 1){
+				return 0;
+			 }else{
+			 	// thought hpath to get start point or end.
+				let id = res['data'][0]['parent_id'];
+				let nebr_number = Number(id.slice(0,8));
+				let now_number = Number(search_time.replace(/[^0-9]/g, ''));
+				if(now_number > nebr_number){
+					return 2;
+				}
+				return 1;
+
+			 }
 		 }
-		 return false;
+		 return -1;
 	})
 	return result;
 }
@@ -295,11 +326,6 @@ function getSyLabel(content){
 
 <style scoped>
 .tag-ul{
-    display: flex;
-    flex-direction: row;
-    /*justify-content: flex-start;
-    align-items: center; */
-    flex-wrap: wrap;
 	width: 100%;
     margin: 0px;
     padding: 0px;
@@ -307,7 +333,15 @@ function getSyLabel(content){
 }
 .tag-full{
     width: 100%;
+	min-width: 80px;
 	margin: 0px;
 	font-size: 14px;
+	text-align:center;
+	vertical-align:middle;
+	float:center;
+
+}
+.space-full{
+	width: 100%;
 }
 </style>

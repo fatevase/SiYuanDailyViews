@@ -117,29 +117,30 @@ async function getAllRootNotes(){
     return note_info;
 }
 
+// TODO: not need it when i using focus envent
 const handleScroll = (e) => {
     const currentTarget = e.currentTarget
-    if (currentTarget.scrollTop + currentTarget.offsetHeight >=
-        currentTarget.scrollHeight) {
-            (async () => {
-                const note_list = await getAllRootNotes();
-                for(var nslot in note_list){
-                    if(nslot > optionsRef.value.length){
-                        optionsRef.value.push({
-                            label: note_list[nslot].sort+' - '+note_list[nslot].name,
-                            value: note_list[nslot]['if'],
-                        });
-                    }
-                }
-            })();
-        console.log('scroll!');
+    // if (currentTarget.scrollTop + currentTarget.offsetHeight >=
+    //     currentTarget.scrollHeight) {
+    //         (async () => {
+    //             const note_list = await getAllRootNotes();
+    //             for(var nslot in note_list){
+    //                 if(nslot > optionsRef.value.length){
+    //                     optionsRef.value.push({
+    //                         label: note_list[nslot].sort+' - '+note_list[nslot].name,
+    //                         value: note_list[nslot]['if'],
+    //                     });
+    //                 }
+    //             }
+    //         })();
+    //     console.log('scroll!');
 
-		let save_data = {}
-		save_data[window.$baseid] = {
-			"custom-notebox-list": JSON.stringify(optionsRef.value),
-		}
-		dataset.saveData(save_data);
-    }
+	// 	let save_data = {}
+	// 	save_data[window.$baseid] = {
+	// 		"custom-notebox-list": JSON.stringify(optionsRef.value),
+	// 	}
+	// 	dataset.saveData(save_data);
+    // }
 }
 
 const handleUpdateSelect = (svalue, options) => {
@@ -159,8 +160,9 @@ const handleUpdateSelect = (svalue, options) => {
     }
 }
 
-const handelShowSelect = (value) => {
-	console.log(value)
+// TODO: bugs show select do not trigger this function
+const handleShowSelect = (value) => {
+	console.log("handleShowSelect", value);
 	show_select_list.value = value;
 	if(value) {
 		(async () => {
@@ -185,8 +187,33 @@ const handelShowSelect = (value) => {
 		dataset.saveData(save_data);
 		})();
 	}
-
 }
+// For template.
+const handleFocusSelect = (e) => {
+	console.log("handleShowSelect", e);
+	(async () => {
+	const note_list = await getAllRootNotes();
+	if (note_list.length > 0){
+		optionsRef.value = [];
+		// 清空之前的数据 刷新notebook box list
+	}
+	for(var nslot in note_list){
+		optionsRef.value.push(
+			{
+				label: `${note_list[nslot].sort} - ${note_list[nslot].name}`,
+				value: note_list[nslot]['id'],
+			}
+		);
+	}
+	let save_data = {}
+	save_data[window.$baseid] = {
+		"custom-notebox-list": JSON.stringify(optionsRef.value),
+	}
+	dataset.saveData(save_data);
+	})();
+	
+}
+
 
 
 const refreshComps = () => {
@@ -255,11 +282,12 @@ const clickOutside = () => {
             <n-thing title="" title-extra="选择需要显示的日记">
             <!-- <n-ellipsis style="max-width: 240px"> -->
             <n-select
+				:on-focus="handleFocusSelect"
                 v-model:value="select_value"
                 :options="optionsRef"
                 :reset-menu-on-options-change="false"
                 :on-update:value="handleUpdateSelect"
-				:on-update:show="handelShowSelect"
+				:on-update:show="handleShowSelect"
                 v-model:show="show_select_list"
                 @scroll="handleScroll"
                 placeholder="选择笔记本"
