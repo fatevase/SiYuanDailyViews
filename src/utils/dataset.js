@@ -57,7 +57,7 @@ async function queryData(path, names){
 		let local_storage = localStorage.getItem(path);
 		if(local_storage != null){
 			try {
-				console.log('query local storage', local_storage)
+				// console.log('query local storage', local_storage)
 				let json_local_data = JSON.parse(local_storage);
 				if(json_local_data != null){
 					if(typeof(names) == "string"){
@@ -124,7 +124,7 @@ function mergeDict(ori_dict, new_dict){
 	for(let i = 0; i < keys.length; i++){
 		// TODO: maybe sub-value was dict and need merge too.
 		new_dict[keys[i]] = new_dict[keys[i]].replace(/&quot;/g, '"');
-		console.log('mergeDict', new_dict[keys[i]])
+		// console.log('mergeDict', new_dict[keys[i]])
 
 		if(typeof(new_dict[keys[i]]) == "object"){
 			// dict to string.

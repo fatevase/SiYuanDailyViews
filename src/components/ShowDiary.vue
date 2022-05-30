@@ -77,13 +77,13 @@ export default {
 							// pop content
 							default:()=>[
 								h(NThing,{},
-									{header:()=>[note_title.value],
+									{header:()=>[h(NSpace,{style:"font-weight:bold;font-size:0.9em;"},()=>[note_title.value])],
 									description:()=>(note_tags.value.length>0)&&
 															note_tags.value.map(item=>h(NTag,{
 																size:'small',
 																color:{'color':rcolor_tag.value, 'borderColor': randTools.colorReverse(rcolor_tag.value)},
 															},()=>[item])),
-									footer:()=>[(note_tags.value.length==0)&&h(NSpace,{style:"float:right;"},()=>["空空如也..."])],
+									footer:()=>[(note_tags.value.length==0)&&h(NSpace,{style:"font-size:0.7em;float:right;"},()=>["空空如也..."])],
 									default:()=>[]}),
 								
 							]}
@@ -91,11 +91,11 @@ export default {
 
 					// ]),
 					
-					h(NSpace, {wrap:true}, ()=>[
+					h(NSpace, {wrap:true, style:"padding-left:10px"}, ()=>[
 						(note_subtitle.value.length>0)&&note_subtitle.value.map(item=>h(NTag,{
 							round:true,
 							size:'small',
-							// style:"font-size:12px;",
+							style:"margin:-9px;",
 							color:{'color':rcolor_subtitle.value,
 									'borderColor': randTools.colorReverse(rcolor_subtitle.value)},
 						},()=>[item]))
@@ -332,6 +332,7 @@ function getSyLabel(content){
     min-width: 80px;
 }
 .tag-full{
+    height:30px;
     width: 100%;
 	min-width: 80px;
 	margin: 0px;

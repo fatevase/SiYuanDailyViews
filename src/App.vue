@@ -4,10 +4,12 @@
 import {ref} from 'vue';
 import DailyViews from './components/DailyViews.vue';
 import { NConfigProvider, darkTheme, lightTheme } from 'naive-ui';
-import { NThemeEditor } from 'naive-ui'
+import { zhCN, dateZhCN } from "naive-ui";
+import { NThemeEditor } from 'naive-ui';
 import dataset from './utils/dataset.js';
 const app_theme = ref(lightTheme);
-
+const app_lang = ref(null);
+const app_date_locale = ref(null);
 
 Init();
 
@@ -18,6 +20,18 @@ function checkThemeValue(value){
     }else{
         app_theme.value = lightTheme;
     }
+}
+
+function checkLangValue(value='zh_CN'){
+    if(value=='zh_CN'){
+        app_lang.value = zhCN;
+        app_date_locale.value = dateZhCN;
+    }else{
+        app_lang.value = null;
+        app_date_locale.value = null;
+    }
+
+    console.log("check lange value", value);
 }
 
 const overridesTheme = ()=>{
@@ -49,14 +63,23 @@ function adjustTheme(){
 	let save_data = {}
 	try{
 		let mode = window.top.siyuan.config.appearance.mode + ''; // 主题模式, 0: 明亮, 1: 暗黑
-		checkThemeValue(mode);
+		let lang = window.top.siyuan.config.appearance.lang + ''; // 语言 , 只检测中文和非中文
+        checkLangValue(lang);
+        checkThemeValue(mode);
 		// dark_background = getComputedStyle(document.documentElement).getPropertyValue('--b3-theme-background');
-		save_data[window.$baseid] = {
+		
+        //check Lang, lang may be never change, so only init when widget open.
+        save_data[window.$baseid] = {
 		"custom-theme-value": mode=='0'? 'false':'true',
+
+		"custom-lang-value": lang=='zh_CN'? 'zh_CN':'en_US',
 		}
 	}catch(e){
 		dataset.queryData(window.$baseid, 'custom-theme-value').then(data=>{
 			checkThemeValue(data);
+		});
+        dataset.queryData(window.$baseid, 'custom-lang-value').then(data=>{
+			checkLangValue(data);
 		});
 	}
 	dataset.saveData(save_data);
@@ -73,14 +96,16 @@ function Init(){
 			id = obj.get('blockid');
 		}
 	}
-	console.log("got widget id.",id);
-	window.$baseid = id
+	console.log("Storage Id:",id);
+	window.$baseid = id;
 	adjustTheme();
 }
 </script>
 
 <template>
   <n-config-provider 
+    :locale="app_lang"
+    :date-locale="app_date_locale"
     :theme="app_theme"
     :theme-overrides="overridesTheme()">
     <!-- <n-theme-editor> -->

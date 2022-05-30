@@ -29,7 +29,7 @@ dataset.queryData(window.$baseid,
 		if(data!=null){
 			console.log("CalenderBar queryData:", data);
 			try{
-				console.log("CalenderBar notebook:", data['custom-notebox-list']);
+				// console.log("CalenderBar notebook:", data['custom-notebox-list']);
 				// idk why " => &quot;, so i must replace it when i using parse
 				optionsRef.value = JSON.parse(data['custom-notebox-list']?data['custom-notebox-list'].replace(/&quot;/g, '"'):'[]');
 			}catch(e){
@@ -58,7 +58,7 @@ dataset.queryData(window.$baseid,
         );
     }
 	let save_data = {}
-	console.log("init async", JSON.stringify(optionsRef.value));
+	// console.log("init async", JSON.stringify(optionsRef.value));
 	save_data[window.$baseid] = {
 		"custom-notebox-list": JSON.stringify(optionsRef.value),
 	}
