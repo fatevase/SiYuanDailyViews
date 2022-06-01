@@ -13,6 +13,8 @@ const optionsRef = ref([
     // value: '0'
     // }
 ])
+const fake_scroll_containerR = ref(null);
+const fake_back_target = () => fake_scroll_containerR.value;
 const message = useMessage();
 const renovate = inject('reload');
 const select_value = ref();
@@ -317,15 +319,29 @@ const clickOutside = () => {
     </n-list>
   </n-popover>
 
-    <n-back-top :visibility-height="0" style="margin-right:0px; opacity:0.8" :onclick="handleClick">
-    <n-icon :size="28"><WindowDevTools24Regular/></n-icon>
-    </n-back-top>
+	    <n-back-top :visibility-height="0" style="margin-right:0px; opacity:0.8" :listen-to="fake_back_target" :onclick="handleClick">
+		<n-icon :size="28"><WindowDevTools24Regular/></n-icon>
+		</n-back-top>
+		<!-- make a fake scroll container to block back-top to scoller document.body -->
+  		<div ref="fake_scroll_containerR"> </div>
 
 <!-- 上面是悬浮的menu，下面是顶部的bar -->
-
 
 </template>
 
 <script scoped>
 
 </script>
+
+<style scoped>
+.menu-sticky {
+	position: fixed;/*固定位置*/
+	top:0;
+	float: right;
+	z-index:9999;/*设置优先级显示，保证不会被覆盖*/
+
+
+}
+
+
+</style>
