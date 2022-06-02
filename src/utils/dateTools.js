@@ -15,7 +15,8 @@ function getNowDate(connect_str='-'){
     let hour = _date.getHours();
     let minute = _date.getMinutes();
     let second = _date.getSeconds();
-    let specific_time = formatDate(year, month, day, hour, minute, second, connect_str);
+
+    let specific_time = formatDate(year, month, day, connect_str, hour, minute, second);
     let date = formatDate(year, month, day, connect_str);
     const result = {
         year: year,

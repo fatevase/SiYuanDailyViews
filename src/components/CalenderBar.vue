@@ -4,7 +4,7 @@ import { useMessage } from 'naive-ui';
 import ApiFunc from '../utils/request.js';
 import dataset from '../utils/dataset.js';
 import {WindowDevTools24Regular,ArrowCounterclockwise12Regular,Notebook24Regular,NotebookLightning24Regular,
-WeatherSunny28Filled,WeatherMoon16Filled, ArrowOutlineUpRight32Regular,} from '@vicons/fluent'
+BookClock20Regular,BookCoins20Filled, ArrowOutlineUpRight32Regular,} from '@vicons/fluent'
 
 // TODO: 可选择仅显示某一个笔记本下的日记
 const optionsRef = ref([
@@ -18,9 +18,10 @@ const fake_back_target = () => fake_scroll_containerR.value;
 const message = useMessage();
 const renovate = inject('reload');
 const select_value = ref();
-const emit = defineEmits(['setRootNoteId', 'setThemeValue']);
+const emit = defineEmits(['setRootNoteId', 'setThemeValue', 'setShowMode']);
 const show_select_list = ref(false);
 const theme_value = ref(true);
+const show_mode = ref(0);
 // test using cache.
 // only support string
 
@@ -119,31 +120,6 @@ async function getAllRootNotes(){
     return note_info;
 }
 
-// TODO: not need it when i using focus envent
-const handleScroll = (e) => {
-    const currentTarget = e.currentTarget
-    // if (currentTarget.scrollTop + currentTarget.offsetHeight >=
-    //     currentTarget.scrollHeight) {
-    //         (async () => {
-    //             const note_list = await getAllRootNotes();
-    //             for(var nslot in note_list){
-    //                 if(nslot > optionsRef.value.length){
-    //                     optionsRef.value.push({
-    //                         label: note_list[nslot].sort+' - '+note_list[nslot].name,
-    //                         value: note_list[nslot]['if'],
-    //                     });
-    //                 }
-    //             }
-    //         })();
-    //     console.log('scroll!');
-
-	// 	let save_data = {}
-	// 	save_data[window.$baseid] = {
-	// 		"custom-notebox-list": JSON.stringify(optionsRef.value),
-	// 	}
-	// 	dataset.saveData(save_data);
-    // }
-}
 
 const handleUpdateSelect = (svalue, options) => {
     // 这里处理回调的点击事件，就不用watch来监听了。
@@ -216,8 +192,6 @@ const handleFocusSelect = (e) => {
 	
 }
 
-
-
 const refreshComps = () => {
 	let mode = '0';
 	try{
@@ -240,6 +214,17 @@ const changeThemes = (value) => {
 	}
 	dataset.saveData(save_data);
     // localStorage.setItem("siyuan_calender_bar_theme_switch", value);
+}
+
+const changeShowMode = (value) =>{
+	if(value==1){
+		emit('setShowMode', '1');
+	}else{
+		emit('setShowMode', '0');
+	}
+	show_mode.value = value;
+	renovate();
+
 }
 
 const float_menu_x = ref(0)
@@ -275,7 +260,7 @@ const clickOutside = () => {
     trigger="manual">
     <n-list>
         <template #header>
-            <h3 style="margin:0px; margin-top:-20px">Settings</h3>
+            <h3 style="margin:0px; margin-top:-20px">设置</h3>
         </template>
         <template #footer>
             <p style="margin:0px; margin-bottom:-20px; float:right; font-size:10px; color:gray">到底是到底了.</p>
@@ -291,7 +276,6 @@ const clickOutside = () => {
                 :on-update:value="handleUpdateSelect"
 				:on-update:show="handleShowSelect"
                 v-model:show="show_select_list"
-                @scroll="handleScroll"
                 placeholder="选择笔记本"
                 style="max-width: 150px;">
                 <template #arrow>
@@ -303,6 +287,29 @@ const clickOutside = () => {
             </n-select>
             <!-- </n-ellipsis> -->
             </n-thing>
+        </n-list-item>
+		<n-list-item>
+            <n-space justify="center">
+				<n-switch
+					:value='show_mode'
+					:on-update:value="changeShowMode"
+					 checked-value="1"
+    				unchecked-value="0"
+					size="large">
+					<template #checked-icon>
+						<n-icon :component="BookCoins20Filled" />
+					</template>
+					<template #unchecked-icon>
+						<n-icon :component="BookClock20Regular" />
+					</template>
+					<template #checked>
+						笔记
+					</template>
+					<template #unchecked>
+						日记
+					</template>
+				</n-switch>
+            </n-space>
         </n-list-item>
         <n-list-item>
             <n-space justify="center">

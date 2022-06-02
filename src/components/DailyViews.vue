@@ -4,7 +4,9 @@ import { defineComponent, h, ref, provide, nextTick } from 'vue'
 import { isYesterday, addDays, isTomorrow } from 'date-fns'
 import ShowDiary from './ShowDiary.vue'
 import CalenderBar from './CalenderBar.vue'
+import ShowNote from './ShowNote.vue'
 import dateTools from '../utils/dateTools.js'
+
 
 const message = useMessage();
 
@@ -13,6 +15,7 @@ const _date = new Date();
 const now_month = ref(_date.getMonth() + 1);
 const default_select = ref(addDays(_date.getTime(), 0).valueOf());
 const root_note_id = ref('0');
+const show_mode = ref(0);
 // bugs? value was default selected
 // :default-value="now_unix_day" was not working
 
@@ -64,6 +67,9 @@ const checkFresh=(month) =>{
 const checkRootNoteId = (get_rn_id) => {
     root_note_id.value = get_rn_id;
 }
+const checkShowMode = (get_show_mode) => {
+    show_mode.value = get_show_mode;
+}
 
 const checkThemeValue = (get_theme_value) => {
     // 这里从子集获取到主题的内容，之后在发送到父级,进而调整主题
@@ -100,7 +106,7 @@ provide("reload", reload);
 
 
 
-    <calender-bar @setRootNoteId="checkRootNoteId" @setThemeValue="checkThemeValue"/>
+    <calender-bar @setRootNoteId="checkRootNoteId" @setThemeValue="checkThemeValue" @setShowMode="checkShowMode"/>
     <n-calendar
         class="main-layout"
         :value="default_select"
@@ -110,10 +116,18 @@ provide("reload", reload);
         @update:value="handleUpdateValue">
         <!-- 这里我提供了两种方式解决 v-for 循环生成组件后续传值的问题，其一是通过不同的key 传值，这样由于载入不同的key就可以获取不同的组件从而强制加载，
             其二是 通过 reload函数， 通过v-if 判断然后刷新组件，子组件通过watch 传入的root_note_id 是否发生改变而刷新组件。-->
-        <show-diary 
+		<div v-if="show_mode==0">
+		<show-diary 
 			class="diary-layout" 
 			:show_note_index="organSearch([year, month, date, root_note_id])" 
 			:key="'-'+year+'-'+month+'-'+date" v-if="isRouterAlive"> </show-diary>
+		</div>
+		<div v-if="show_mode==1">
+        <show-note 
+			class="diary-layout" 
+			:show_note_index="organSearch([year, month, date, root_note_id])" 
+			:key="'-'+year+'-'+month+'-'+date" v-if="isRouterAlive"> </show-note>
+		</div>
 	</n-calendar>
 </template>
 
