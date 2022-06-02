@@ -17,7 +17,7 @@ import http from './http.js';
     
 
 
-    ApiFunc.getNoteByTitle = (params) => {
+    ApiFunc.getNoteBySql = (params) => {
         return http.post(get_note_sql, params)
     }
     ApiFunc.getAllRootNotes = (params) => {
