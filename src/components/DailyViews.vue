@@ -118,7 +118,7 @@ provide("reload", reload);
             其二是 通过 reload函数， 通过v-if 判断然后刷新组件，子组件通过watch 传入的root_note_id 是否发生改变而刷新组件。-->
 		<div v-if="show_mode==0">
 		<show-diary 
-			class="diary-layout" 
+			class="diary-layout"
 			:show_note_index="organSearch([year, month, date, root_note_id])" 
 			:key="'-'+year+'-'+month+'-'+date" v-if="isRouterAlive"> </show-diary>
 		</div>
@@ -126,7 +126,7 @@ provide("reload", reload);
         <show-note 
 			class="diary-layout" 
 			:show_note_index="organSearch([year, month, date, root_note_id])" 
-			:key="'-'+year+'-'+month+'-'+date" v-if="isRouterAlive"> </show-note>
+			v-if="isRouterAlive"> </show-note>
 		</div>
 	</n-calendar>
 </template>

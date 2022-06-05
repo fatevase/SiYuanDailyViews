@@ -1,13 +1,17 @@
 <script>
 import { h, ref, inject } from "vue"
 import{ useMessage} from "naive-ui"
-import {NTag, NPopover, NEllipsis, NThing, NSpace, NIcon} from 'naive-ui';
+import {NTag, NPopover, NEllipsis, NThing, NSpace, NIcon, NElement} from 'naive-ui';
 import {AirplaneTakeOff24Regular, Airplane20Filled} from '@vicons/fluent';
 import {AirplaneTicketOutlined} from '@vicons/material';
+
+import Emoji from './Emoji.vue';
 
 import ApiFunc from '../utils/request.js';
 import randTools from '../utils/randomTools.js';
 import dateTools from '../utils/dateTools.js';
+import siyuanTools from '../utils/siyuanTools.js';
+
 
 // TODO: 增加笔记检索缓存(暂时不做)
 // TODO: 添加心情图标
@@ -51,18 +55,27 @@ export default {
     const rcolor_tag = ref('#000000');
     const note_subtitle = ref([]);
     const note_event = ref(-1);
+		const note_icon = ref('');
+
+		// popover display then loadding some data
+		const popover_foot = ref("");
+
     (async () => {
-      const check_result = await searchExistDiary(props.show_note_index);
+      const check_result = await queryExistDiarys(props.show_note_index);
       note_exist.value = check_result["exist"];
       note_title.value = check_result['show_title'];
       note_id.value = check_result["id"];
       note_tags.value = check_result["tags"];
       note_subtitle.value = check_result["subtitile"];
       note_event.value = check_result["event"];
+			note_icon.value = check_result["icon"];
       rcolor_tag.value = randTools.randomColor("tags"+note_title.value);
       rcolor_subtitle.value = randTools.randomColor(note_title.value+"stitles");
-      
+			if(note_id.value!='0'){
+				popover_foot.value = await countNoteChars("'"+note_id.value+"'");
+			}
     })();
+
 
     function renderAllTemplate(){
       return note_exist.value && h(NSpace,{vertical:true,class:"tag-ul"},()=>[
@@ -76,7 +89,14 @@ export default {
                     onClick:()=>jumpToNote(note_id.value),
                   }, 
                     ()=>h(NSpace,{wrap:false, justify:"end"},()=>[
-                      note_event.value!=0&&h(NEllipsis,{tooltip:false,style:"max-width: 90px;padding-top:4px;"},()=>[note_title.value,]),
+                      note_event.value!=0&&h(NEllipsis,{tooltip:false,style:"max-width: 90px;padding-top:4px;"},
+					  						()=>[
+													
+													note_icon.value.length>0?h(Emoji,{emoji_unicode:note_icon.value}, ()=>[]):"",
+													note_icon.value.length>0?"|":"",
+													note_event.value>0?note_title.value.slice(
+														note_event.value==1?0:note_title.value.length/2,
+														note_event.value==1?note_title.value.length/2:note_title.value.length):note_title.value]),
                       note_event.value==0&&h(NIcon, {size:"20"},()=>h(Airplane20Filled,{})),
                       note_event.value==1&&h(NIcon, {size:"20"},()=>h(AirplaneTicketOutlined,{})),
                       note_event.value==2&&h(NIcon, {size:"20"},()=>h(AirplaneTakeOff24Regular,{})), 
@@ -92,7 +112,12 @@ export default {
                                 size:'small',
                                 color:{'color':rcolor_tag.value, 'borderColor': randTools.colorReverse(rcolor_tag.value)},
                               },()=>[item])),
-                  footer:()=>[(note_tags.value.length==0)&&h(NSpace,{style:"font-size:0.7em;float:right;"},()=>["空空如也..."])],
+                  footer:()=>[
+										(popover_foot.value=='')?h(
+											NSpace,{style:"font-size:0.7em;float:right;"},()=>["空空如也..."]):h(
+												NSpace, {style:"font-size:0.7em;float:right;"},()=>["总计",
+												h(NSpace, {style:"font-size:1em; font-weight:bold;"}, ()=>[popover_foot.value,]),"个字."])
+											],
                   default:()=>[]}),
                 
               ]}
@@ -159,7 +184,7 @@ function VirtualOpen(id){
   }
 }
 
-async function searchExistDiary(check_data){
+async function queryExistDiarys(check_data){
   const y = check_data['year'];
   const m = check_data['month']>9?check_data['month']:'0'+check_data['month'];
   const d = check_data['day']>9?check_data['day']:'0'+check_data['day'];
@@ -169,8 +194,6 @@ async function searchExistDiary(check_data){
 
   let search_daily_id = "";
 
-  // only for one labels
-  // sql https://stackoverflow.com/questions/1415328/combining-union-and-limit-operations-in-mysql-query
   // support 3 labels
   if(box_id != '0'){
     search_daily_id = "SELECT id FROM blocks WHERE "+
@@ -185,34 +208,8 @@ async function searchExistDiary(check_data){
                 "LIMIT 1"
 
   }
-  let search_title = "SELECT content as content,"+
-               "CASE WHEN subtype IS '' THEN 'title' ELSE subtype END AS type , "+
-               "id FROM blocks WHERE id IN ( "+search_daily_id+" ) "+
-               "AND content!='' GROUP BY content LIMIT 1"
-
-  let search_tag = "SELECT tag as content, "+
-        "CASE WHEN subtype IS '' THEN 'tag' ELSE subtype END AS type, "+
-        "id FROM blocks WHERE tag!='' "+
-        "AND root_id IN ("+search_daily_id+") "+
-        "LIMIT 5"
-
-  let search_h1 = "SELECT content as content, subtype as type, id FROM blocks WHERE "+
-          "content!='' "+
-          "AND subtype='h1' "+
-          "AND root_id IN ("+search_daily_id+") "+
-          "LIMIT 1"
-  let search_h2 = "SELECT content as content, subtype as type, id FROM blocks WHERE "+
-          "content!='' "+
-          "AND subtype='h2' "+
-          "AND root_id IN ("+search_daily_id+") "+
-          "LIMIT 3"
-
-  let concat_sql = "SELECT * FROM ("+search_title+
-          ") UNION SELECT * FROM ("+search_h1+
-          ") UNION SELECT * FROM ("+search_h2+
-          ") UNION SELECT * FROM ("+search_tag+
-          ")"
-
+	
+	let concat_sql = siyuanTools.generateSql(search_daily_id, {'title':1, 'h1':1, 'h2':3, 'tag':5, 'icon':1})
 
   let note_info = await ApiFunc.getNoteBySql({"stmt": concat_sql}).then((res) =>{
     let note_exist = false;
@@ -220,6 +217,7 @@ async function searchExistDiary(check_data){
     let note_id = 0;
     let note_tags = [];
     let note_subtitle=[];
+		let note_icon = '';
     let temp_title = "";
     if(res['data'].length > 0){
       for(var i in res['data']){
@@ -228,12 +226,14 @@ async function searchExistDiary(check_data){
           temp_title = _data['content'];
           note_id = _data['id'];
         }else if(_data['type'] == 'tag'){
-          note_tags.push(getSyLabel(_data['content']));
+          note_tags.push(siyuanTools.getSyLabel(_data['content']));
         }else if(_data['type'] == 'h1'){
           show_title = _data['content'];
         }else if(_data['type'] == 'h2'){
           note_subtitle.push(_data['content']);
-        }
+        }else if(_data['type'] == 'icon'){
+					note_icon = _data['content'];
+				}
       }
       note_exist = true;
     }
@@ -246,6 +246,7 @@ async function searchExistDiary(check_data){
       "id": note_id,
       "tags": note_tags,
       "subtitile": note_subtitle,
+			"icon": note_icon
     }
   })
 
@@ -299,18 +300,18 @@ async function searchSameDiary(search_time, search_title, box_id){
   return result;
 }
 
-
-function getSyLabel(content){
-  if(content == null) return "";
-  if(content.length > 0){
-    let try_macth = content.match("\#(.*)\#");
-    
-    if(try_macth != null) {
-      return try_macth[1];
-    }
-  }
-  return "";
+async function countNoteChars(note_id){
+	let sql = "SELECT SUM(CAST(length AS SIGNED)) AS length FROM blocks "+	
+		"WHERE type!='d' AND root_id IN (" +note_id + ")";
+	let length = await ApiFunc.getNoteBySql({"stmt": sql}).then((res) =>{
+		if(res['data']){
+			return res['data'][0]['length'];
+		}
+		return 0;
+	})
+	return length;
 }
+
 
 
 

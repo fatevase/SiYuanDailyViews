@@ -8,12 +8,11 @@ import {AirplaneTicketOutlined} from '@vicons/material';
 import ApiFunc from '../utils/request.js';
 import randTools from '../utils/randomTools.js';
 import dateTools from '../utils/dateTools.js';
+import siyuanTools from '../utils/siyuanTools.js';
 
 // 单独的页面，与日记不同，索引的是时间
-// TODO: 通过按钮切换该页面
-// 不同的索引规则，索引当天创建的前两个笔记
+// TODO:
 // 弹出框显示每个笔记的第一个一级索引 和 1个二级索引 和 3个标签
-// 无事件标记
 
 export default {
   components:{NTag},
@@ -58,13 +57,14 @@ export default {
 
 
     function renderAllTemplate(){
-      return  (exist_notes.value)&&h(NSpace,{vertical:true, class:"tag-ul"},()=>exist_notes.value.map(note=>note['id'] && h(NSpace,{vertical:true,class:"tag-ul"},()=>[
+      return  (exist_notes.value)&&h(NSpace,{vertical:true, class:"tag-ul"},
+	  	()=>exist_notes.value.map(note=>note['id'] && h(NSpace,{vertical:true,class:"tag-ul"},()=>[
           // h(NSpace,{wrap:false, justify:"space-around", class:"space-full"},()=>[
-            h(NPopover,{width: 'trigger', trigger: "hover", class: "tag-full"},
+            h(NPopover,{style: "{ maxWidth: '300px' }", trigger: "hover"},
               {
               // trigger show content
               trigger:()=>h(NTag, {
-                    type: note['tag']?"primary":"info",
+                    type: (note['tag']||note['h2'])?"primary":"info",
                     size:"large", class:"tag-full",
                     onClick:()=>jumpToNote(note['id']),
                   }, 
@@ -76,29 +76,24 @@ export default {
               // pop content
               default:()=>[
                 h(NThing,{},
-                  {header:()=>[h(NSpace,{style:"font-weight:bold;font-size:0.9em;"},()=>[note['title'],])],
-                  description:()=>(note['tag']!=undefined)&&
-                              note['tag'].map(_tag=>(_tag)&&h(NTag,{
+                  {header:()=>[h(NSpace,{style:"font-weight:bold;font-size:0.9em;"},
+				  				()=>[note['h1']?note['h1']:note['title'],])],
+                  description:()=>[
+					  note['h2']&&note['h2'].map(
+								_h2=>(_h2)&&h(NSpace,{
+                              },()=>[_h2])),
+				  ],
+                  footer:()=>[note['tag']&&note['tag'].map(
+								_tag=>(_tag)&&h(NTag,{
                                 size:'small',
+								style:"font-size:0.7em;float:right;",
                                 color:{'color':'#ffffff', 'borderColor': randTools.colorReverse("#ffffff")},
-                              },()=>[_tag])),
-                  footer:()=>[(note['tag']==null)&&h(NSpace,{style:"font-size:0.7em;float:right;"},()=>["空空如也..."])],
+                              },()=>[siyuanTools.getSyLabel(_tag)])),
+							  (note['tag']==null)&&h(NSpace,{style:"font-size:0.7em;float:right;"},()=>["空空如也..."])],
                   default:()=>[]}),
                 
               ]}
             ),
-
-          // ]),
-          
-          // h(NSpace, {wrap:true, style:"padding-left:10px"}, ()=>[
-          //   (note['h1'])&&note['h1'].map(_h1=>h(NTag,{
-          //     round:true,
-          //     size:'small',
-          //     style:"margin:-9px;",
-          //     color:{'color':"#ffffff",
-          //         'borderColor': randTools.colorReverse("#ffffff")},
-          //   },()=>[h1]))
-          // ])
         ]
       )
       ))
@@ -111,44 +106,19 @@ export default {
   },
   watch:{
     show_note_index(newVal, oldVal){
-      if(newVal.root_note_id != oldVal.root_note_id){
+      if((newVal.root_note_id != oldVal.root_note_id) || (newVal.day != oldVal.day)
+        || (newVal.month != oldVal.month) || (newVal.year != oldVal.year)){
         // 修复点击任意点都会闪一下的问题。
-        this.renovate()
+        this.renovate();
       }
     }
   }
 
 }
 function jumpToNote(note_id){
-  VirtualOpen(note_id)
-  // window.open('siyuan://blocks/'+note_id)
+  siyuanTools.VirtualOpen(note_id);
 }
 
-// Thanks leolee9086.
-// https://github.com/leolee9086/cc-baselib/blob/main/components/cc-link-siyuan.vue
-function VirtualOpen(id){
-  if (window!=window.parent){
-    let main_window= window.parent.document
-    let virtual_link =  main_window.createElement("span")
-    virtual_link.setAttribute("data-type","block-ref")
-    virtual_link.setAttribute("data-id",id)
-    let temp = main_window.querySelector(".protyle-wysiwyg div[data-node-id] div[contenteditable]")
-    temp.appendChild(virtual_link)
-    let click_event =  main_window.createEvent('MouseEvents')
-    click_event.initMouseEvent('click', true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
-    virtual_link.dispatchEvent(click_event);
-    virtual_link.remove()
-  }else{
-    let main_window=window.document
-    let virtual_link = main_window.createElement("a")
-    virtual_link.setAttribute("href",`siyuan://blocks/${id}`)
-    document.body.appendChild(virtual_link)
-    let click_event =  main_window.createEvent('MouseEvents')
-    click_event.initMouseEvent('click', true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
-    virtual_link.dispatchEvent(click_event);
-    virtual_link.remove()
-  }
-}
 
 async function queryExistNotes(check_data){
   const y = check_data['year'];
@@ -160,6 +130,7 @@ async function queryExistNotes(check_data){
   
   // for sql. match any character
   let date_str = y+m+d;
+  let daily_str = y+"_"+m+"_"+d;
 
   let search_notes_id = "";
   let concat_sql = ""
@@ -168,11 +139,14 @@ async function queryExistNotes(check_data){
   // sql https://stackoverflow.com/questions/1415328/combining-union-and-limit-operations-in-mysql-query
   // support 3 labels
 
-  search_notes_id = "SELECT id FROM blocks WHERE "+
+  search_notes_id = "SELECT id, updated FROM blocks WHERE "+
             "created LIKE '"+date_str+"%' "+
             "AND type= 'd' "+
+            "AND ial NOT LIKE '%"+daily_str+"%'"+
+            "AND hpath NOT LIKE '%/daily note%'"+
             (box_id=='0'?"":"AND box='"+box_id+"' ")+
-            "LIMIT 2"
+						"ORDER BY updated DESC "+
+            "LIMIT 2 ";
 
 	notes_info = await ApiFunc.getNoteBySql({"stmt": search_notes_id}).then((res)=>{
     // TODO: sort id by some algorithm...
@@ -190,7 +164,7 @@ async function queryExistNotes(check_data){
     let search_promises = [];
     for(var i=0; i < ids.length; i++){
       let note_id = ids[i];
-      let note_sql = generateSql(note_id, ['title', 'h1', 'tag']);
+      let note_sql = generateSql(note_id, ['title', 'h1', 'h2', 'tag']);
       search_promises.push(ApiFunc.getNoteBySql({"stmt": note_sql}).then((res)=>{
         return res;}));
     }
@@ -205,43 +179,49 @@ async function queryExistNotes(check_data){
         if(_data['type']=='title'){
           _note_info['id'] = _data['id'];
         }
-        _note_info[_data['type']] = [];
+		if(_note_info[_data['type']]==undefined){
+        	_note_info[_data['type']] = [];
+		}
         _note_info[_data['type']] = _note_info[_data['type']].concat(_data['content']);
       }
       all_notes_info.push(_note_info);
     }
 
-    // console.log(date_str, "promise all data", data);
-    // console.log(date_str,"all_notesinfo", all_notes_info);
+    console.log(date_str,"all_notesinfo", all_notes_info);
     return all_notes_info;
   })
   return notes_info;
 
 }
 
-function generateSql(note_id, search_list) {
+function generateSql(note_id, query_map) {
+	
+	let search_keys = Object.keys(query_map);
+	if(search_keys[0] == '0'){
+		search_keys = query_map;
+	}
 
   let search_title = "SELECT content as content,"+
 		"CASE WHEN subtype IS '' THEN 'title' ELSE subtype END AS type , "+
 		"id FROM blocks WHERE id IN ('"+note_id+"') "+
-		"AND content!='' GROUP BY content LIMIT 1"
+		"AND content!='' GROUP BY content LIMIT "+(query_map['title']?query_map['title']:'1')+" "
 
   let search_tag = "SELECT tag as content, "+
         "CASE WHEN subtype IS '' THEN 'tag' ELSE subtype END AS type, "+
         "id FROM blocks WHERE tag!='' "+
         "AND root_id IN ('"+note_id+"') "+
-        "LIMIT 5"
+        "LIMIT "+(query_map['tag']?query_map['tag']:'2')+" "
 
   let search_h1 = "SELECT content as content, subtype as type, id FROM blocks WHERE "+
           "content!='' "+
           "AND subtype='h1' "+
           "AND root_id IN ('"+note_id+"') "+
-          "LIMIT 1"
+          "LIMIT "+(query_map['h1']?query_map['h1']:'1')+" "
   let search_h2 = "SELECT content as content, subtype as type, id FROM blocks WHERE "+
           "content!='' "+
           "AND subtype='h2' "+
           "AND root_id IN ('"+note_id+"') "+
-          "LIMIT 3"
+          "LIMIT "+(query_map['h2']?query_map['h2']:'2')+" "
 
   let sqls = {
     "title": search_title,
@@ -252,61 +232,19 @@ function generateSql(note_id, search_list) {
 
   let combined_index = 0;
   let concat_sql = "";
-  for(let i = 0; i < search_list.length; i++){
-    let type = search_list[i];
+  for(let i = 0; i < search_keys.length; i++){
+    let type = search_keys[i];
     let sql = sqls[type];
     if(sql != undefined){
       if(combined_index == 0){
         concat_sql += "SELECT * FROM ("+sql+") ";
       }else{
-        concat_sql += "UNION ALL SELECT * FROM ("+sql+") ";
+        concat_sql += "UNION SELECT * FROM ("+sql+") ";
       }
       combined_index = 1;
     }
   }
-
   return concat_sql;
-}
-
-async function checkDailyStatus(box_id){
-  const result = await ApiFunc.getNoteConfig({"notebook":box_id}).then((res) =>{
-    if(res['data']){
-      const daily_root_path = res['data']['conf']['dailyNoteSavePath'].split('/')[1];
-      const search_sql = {
-        "stmt": "SELECT id FROM blocks WHERE hpath LIKE '"+"/"+daily_root_path+"/"+
-        "%' AND box = '"+box_id+"'"
-      }
-      return search_sql;
-    }
-    return null;
-  }).then((res) =>{
-    if(res){  
-      return ApiFunc.getNoteBySql(res);
-    }else{
-      return null;
-    }
-  }).then((res) =>{
-    if(res){
-      if(res['data'].length > 0){
-        return true;
-    }
-    }
-    return false;
-  })
-  return result;
-}
-
-
-function getSyLabel(content){
-  if(content == null) return "";
-  if(content.length > 0){
-    let try_macth = content.match("\#(.*)\#");
-    
-    if(try_macth != null) {
-      return try_macth[1];
-    }
-  }
-  return "";
 }
 
 
