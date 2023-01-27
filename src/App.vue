@@ -9,6 +9,7 @@ import { NThemeEditor } from 'naive-ui';
 import dataset from './utils/dataset.js';
 const app_theme = ref(lightTheme);
 const app_lang = ref(null);
+const app_setting = ref(null);
 const app_date_locale = ref(null);
 
 Init();
@@ -20,6 +21,10 @@ function checkThemeValue(value){
     }else{
         app_theme.value = lightTheme;
     }
+}
+
+function checkSettingValue(value){
+  app_setting.value = value;
 }
 
 function checkLangValue(value='zh_CN'){
@@ -64,12 +69,12 @@ function adjustTheme(){
 	try{
 		let mode = window.top.siyuan.config.appearance.mode + ''; // 主题模式, 0: 明亮, 1: 暗黑
 		let lang = window.top.siyuan.config.appearance.lang + ''; // 语言 , 只检测中文和非中文
-        checkLangValue(lang);
-        checkThemeValue(mode);
+    checkLangValue(lang);
+    checkThemeValue(mode);
 		// dark_background = getComputedStyle(document.documentElement).getPropertyValue('--b3-theme-background');
 		
         //check Lang, lang may be never change, so only init when widget open.
-        save_data[window.$baseid] = {
+    save_data[window.$baseid] = {
 		"custom-theme-value": mode=='0'? 'false':'true',
 
 		"custom-lang-value": lang=='zh_CN'? 'zh_CN':'en_US',
@@ -83,6 +88,27 @@ function adjustTheme(){
 		});
 	}
 	dataset.saveData(save_data);
+}
+
+function adjustPluginSettings(){
+	let save_data = {
+  }
+  let setting_default = {
+      // 0 for diary and 1 for note
+    "content_switch": 0
+  }
+  dataset.queryData(window.$baseid, 'custom-setting-content-switch-value').then(data=>{
+    if(data!=null && data >= 0){
+      setting_default['content_switch'] = data;
+    }
+    // checkSettingValue(setting_default);
+    save_data[window.$baseid] = {
+      'custom-setting-content-switch-value': setting_default['content_switch']
+    }
+    dataset.saveData(save_data);
+  });
+
+
 }
 
 function Init(){
@@ -99,6 +125,7 @@ function Init(){
 	console.log("Storage Id:",id);
 	window.$baseid = id;
 	adjustTheme();
+  adjustPluginSettings();
 }
 </script>
 

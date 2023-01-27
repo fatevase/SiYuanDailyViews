@@ -27,7 +27,8 @@ const show_mode = ref(0);
 
 
 dataset.queryData(window.$baseid, 
- ['custom-notebox-list', 'custom-current-notebox', 'custom-theme-value']).then(
+ ['custom-notebox-list', 'custom-current-notebox', 'custom-theme-value',
+  'custom-setting-content-switch-value']).then(
 	(data)=>{
 		if(data!=null){
 			console.log("CalenderBar queryData:", data);
@@ -39,7 +40,12 @@ dataset.queryData(window.$baseid,
 			}
 			select_value.value = data['custom-current-notebox'];
 			theme_value.value = data['custom-theme-value']=='dark'?true:false;
-			emit('setRootNoteId', select_value.value==null?0:select_value.value);
+			emit('setRootNoteId', select_value.value==null?'0':select_value.value);
+      // console.
+      let switch_value = data['custom-setting-content-switch-value'];
+
+      changeShowMode(switch_value==null?0:switch_value);
+
 		}
 	}
 );
@@ -223,6 +229,11 @@ const changeShowMode = (value) =>{
 		emit('setShowMode', '0');
 	}
 	show_mode.value = value;
+  let save_data = {};
+  save_data[window.$baseid] = {
+    'custom-setting-content-switch-value': value
+  }
+  dataset.saveData(save_data);
 	renovate();
 
 }
@@ -293,8 +304,8 @@ const clickOutside = () => {
 				<n-switch
 					:value='show_mode'
 					:on-update:value="changeShowMode"
-					 checked-value="1"
-    				unchecked-value="0"
+					 checked-value='1'
+    				unchecked-value='0'
 					size="large">
 					<template #checked-icon>
 						<n-icon :component="BookCoins20Filled" />

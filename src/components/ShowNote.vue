@@ -1,7 +1,8 @@
 <script>
 import { h, ref, inject } from "vue"
 import{ useMessage} from "naive-ui"
-import {NTag, NPopover, NEllipsis, NThing, NSpace, NIcon} from 'naive-ui';
+
+import {NTag, NPopover, NEllipsis, NThing, NSpace, NIcon, NScrollbar,NWatermark} from 'naive-ui';
 import {AirplaneTakeOff24Regular, Airplane20Filled} from '@vicons/fluent';
 import {AirplaneTicketOutlined} from '@vicons/material';
 
@@ -57,7 +58,13 @@ export default {
 
 
     function renderAllTemplate(){
-      return  (exist_notes.value)&&h(NSpace,{vertical:true, class:"tag-ul"},
+      // if(exist_notes.value){
+      //   return 
+      // }else{
+      //   return 
+      //   }
+      console.log('exist_note', exist_notes.value.length==0);
+      return (exist_notes.value.length)?h(NScrollbar,{},()=>[h(NSpace,{vertical:true, class:"content-ul"},
 	  	()=>exist_notes.value.map(note=>note['id'] && h(NSpace,{vertical:true,class:"tag-ul"},()=>[
           // h(NSpace,{wrap:false, justify:"space-around", class:"space-full"},()=>[
             h(NPopover,{style: "{ maxWidth: '300px' }", trigger: "hover"},
@@ -96,7 +103,11 @@ export default {
             ),
         ]
       )
-      ))
+      ))]):h(NWatermark,{
+          content:"空", cross:true, 'font-size':16,
+          'x-gap':20, 'y-gap':20, 'x-offset':20, 'y-offset':16,
+          'line-height':20, rotate:-35,},
+            ()=>[h(NSpace,{vertical:true, class:"content-ul"},()=>[""])])
     }
 
     return ()=> renderAllTemplate()
@@ -145,8 +156,8 @@ async function queryExistNotes(check_data){
             "AND ial NOT LIKE '%"+daily_str+"%'"+
             "AND hpath NOT LIKE '%/daily note%'"+
             (box_id=='0'?"":"AND box='"+box_id+"' ")+
-						"ORDER BY updated DESC "+
-            "LIMIT 2 ";
+						"ORDER BY updated DESC "//+
+            //"LIMIT 2 ";
 
 	notes_info = await ApiFunc.getNoteBySql({"stmt": search_notes_id}).then((res)=>{
     // TODO: sort id by some algorithm...
@@ -258,6 +269,11 @@ function generateSql(note_id, query_map) {
 </template>
 
 <style scoped>
+.content-ul{
+  height:100px;
+  float:center;
+
+}
 .tag-ul{
   width: 100%;
   margin: 0px;
